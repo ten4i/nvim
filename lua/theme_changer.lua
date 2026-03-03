@@ -1,10 +1,8 @@
 -- =========================================================
--- 🌗 Detect GNOME color scheme
+-- 🌗 Detect GNOME system theme (light / dark)
 -- =========================================================
 local function get_system_theme()
-  local handle = io.popen(
-    "gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null"
-  )
+  local handle = io.popen("gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null")
   if not handle then
     return "dark"
   end
@@ -16,44 +14,68 @@ local function get_system_theme()
 
   if result:match("prefer%-light") then
     return "light"
-  else
-    return "dark"
   end
+  return "dark"
 end
 
-local theme = get_system_theme()
+-- =========================================================
+-- 🫥 Transparent background
+-- =========================================================
+local function set_transparency()
+  local groups = {
+    "Normal",
+    "NormalNC",
+    "NormalFloat",
+    "FloatBorder",
+    "SignColumn",
+    "EndOfBuffer",
+    "MsgArea",
+    "FoldColumn",
+    "LineNr",
+    "CursorLineNr",
+    "StatusLine",
+    "StatusLineNC",
+    "VertSplit",
+    "WinSeparator",
+  }
 
--- =========================================================
--- 🎨 Everforest setup (IMPORTANT: BEFORE colorscheme)
--- =========================================================
-vim.opt.termguicolors = true
-
-vim.g.everforest_background = "soft"        -- soft | medium | hard
-vim.g.everforest_enable_italic = 1
-vim.g.everforest_disable_italic_comment = 0
-vim.g.everforest_ui_contrast = "high"
-vim.g.everforest_diagnostic_text_highlight = 1
-vim.g.everforest_diagnostic_line_highlight = 0
-vim.g.everforest_transparent_background = 1
-
--- =========================================================
--- 🌗 Apply background
--- =========================================================
-if theme == "light" then
-  vim.o.background = "light"
-else
-  vim.o.background = "dark"
+  for _, group in ipairs(groups) do
+    vim.api.nvim_set_hl(0, group, { bg = "NONE" })
+  end
+  -- sometimes needed for floats
+  vim.api.nvim_set_hl(0, "Pmenu", { bg = "NONE" })
+  vim.api.nvim_set_hl(0, "PmenuSel", {
+  bg = "#E2E1DF", -- subtle highlight
+  bold = true,
+})
 end
 
-vim.cmd("colorscheme everforest")
+-- =========================================================
+-- 🎨 Apply colorscheme + transparency
+-- =========================================================
+local function apply_theme()
+  local bg = get_system_theme()
+  vim.o.background = bg
+
+  if bg == "light" then
+    vim.cmd.colorscheme("yang")
+  else
+    vim.cmd.colorscheme("yin")
+  end
+
+  set_transparency()
+end
 
 -- =========================================================
--- 🔢 Cursorline (leave everforest colors)
+-- ✅ Make it stick (themes re-apply highlights)
 -- =========================================================
-vim.opt.cursorline = true
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    set_transparency()
+  end,
+})
 
 -- =========================================================
--- 🧱 indent-blankline / ibl.nvim (safe tweak)
+-- 🚀 Execute
 -- =========================================================
-vim.api.nvim_set_hl(0, "IblScope", { fg = "#5A5A5A" })
-
+apply_theme()

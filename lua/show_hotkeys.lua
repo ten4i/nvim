@@ -6,6 +6,8 @@ local lines = {
   "Q                : record macro",
   "<Space><Esc>     : clear search highlight",
   "sudo save        : :w !sudo tee %",
+  "<leader>ev       : open $MYVIMRC",
+  "<leader>sv       : restart $MYVIMRC",
   "",
   "══════════ TELESCOPE / FILES ══════════",
   "<leader>fb       : file browser (cwd)",

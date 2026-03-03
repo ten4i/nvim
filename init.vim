@@ -5,11 +5,12 @@ EOF
 
 " sets, mapleader, filetypes
 let g:netrw_banner = 0
-set guicursor=a:block
+" set guicursor=a:block
 set spelllang=ru
+" set cursorline
 set mouse=a
 set encoding=utf-8
-set relativenumber
+" set relativenumber
 set number
 set numberwidth=1
 set noswapfile
@@ -101,10 +102,7 @@ Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'L3MON4D3/luaSnip'
-Plug 'sainnhe/everforest'
 Plug 'Shatur/neovim-ayu'
-Plug 'gosukiwi/vim-atom-dark'
-Plug 'projekt0n/github-nvim-theme'
 Plug 'tpope/vim-commentary'
 Plug 'mfussenegger/nvim-dap'
 Plug 'rcarriga/nvim-dap-ui'
@@ -118,12 +116,18 @@ Plug 'nvim-tree/nvim-web-devicons'
 Plug 'romgrk/barbar.nvim'
 Plug 'Yggdroot/indentLine'
 Plug 'stevearc/conform.nvim'
+Plug 'webhooked/kanso.nvim'
+Plug 'sjl/badwolf'
+Plug 'yankcrime/direwolf'
+Plug 'pgdouyon/vim-yin-yang'
 call plug#end()
 
 " HOTKEYS
-" Move line up/down with Shift+Arrow
-nnoremap <S-Up> :m .-2<CR>==
-nnoremap <S-Down> :m .+1<CR>==
+
+" $MYVIMRC
+nnoremap <leader>ev :e $MYVIMRC<CR>
+nnoremap <leader>sv :source $MYVIMRC<CR>
+
 " splits
 nnoremap <silent> <C-h> <C-w>h
 nnoremap <silent> <C-j> <C-w>j
