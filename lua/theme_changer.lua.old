@@ -1,8 +1,12 @@
 -- =========================================================
--- 🌗 Detect GNOME system theme (light / dark)
+-- Detect GNOME system theme (light / dark)
 -- =========================================================
 local function get_system_theme()
-  local handle = io.popen("gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null")
+
+  local handle = io.popen(
+    "gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null"
+  )
+
   if not handle then
     return "dark"
   end
@@ -10,18 +14,24 @@ local function get_system_theme()
   local result = handle:read("*a") or ""
   handle:close()
 
-  result = result:lower():gsub("[\n']", ""):gsub("%s+", "")
+  result = result
+    :lower()
+    :gsub("[\n']", "")
+    :gsub("%s+", "")
 
   if result:match("prefer%-light") then
     return "light"
   end
+
   return "dark"
 end
 
+
 -- =========================================================
--- 🫥 Transparent background
+-- Transparent background
 -- =========================================================
 local function set_transparency()
+
   local groups = {
     "Normal",
     "NormalNC",
@@ -31,8 +41,6 @@ local function set_transparency()
     "EndOfBuffer",
     "MsgArea",
     "FoldColumn",
-    "LineNr",
-    "CursorLineNr",
     "StatusLine",
     "StatusLineNC",
     "VertSplit",
@@ -42,19 +50,62 @@ local function set_transparency()
   for _, group in ipairs(groups) do
     vim.api.nvim_set_hl(0, group, { bg = "NONE" })
   end
-  -- sometimes needed for floats
-  vim.api.nvim_set_hl(0, "Pmenu", { bg = "NONE" })
-  vim.api.nvim_set_hl(0, "PmenuSel", {
-  bg = "#E2E1DF", -- subtle highlight
-  bold = true,
-})
+
+end
+
+
+-- =========================================================
+-- Cursorline + line numbers
+-- =========================================================
+
+local function set_cursor_ui()
+
+  vim.opt.cursorline = true
+
+  -- line numbers
+  vim.api.nvim_set_hl(0, "LineNr", {
+    fg = "#6e6e6e",
+    bg = "NONE"
+  })
+
+  vim.api.nvim_set_hl(0, "CursorLineNr", {
+    fg = "#e6c384",
+    bg = "NONE",
+    bold = true
+  })
+
+  -- main cursor line
+  vim.api.nvim_set_hl(0, "CursorLine", {
+    bg = "#252535"
+  })
+
+  -- floats (LSP / hover / diagnostics)
+  vim.api.nvim_set_hl(0, "NormalFloat", {bg = "NONE"})
+  vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#6e6e6e", bg = "NONE" })
+
+  vim.api.nvim_set_hl(0, "FloatBorder", {
+    fg = "#6e6e6e",
+    bg = "NONE"
+  })
+
+  -- telescope selection line
+  vim.api.nvim_set_hl(0, "TelescopeSelection", {
+    bg = "#252535"
+  })
+
+  vim.api.nvim_set_hl(0, "TelescopeSelectionCaret", {
+    fg = "#e6c384"
+  })
+
 end
 
 -- =========================================================
--- 🎨 Apply colorscheme + transparency
+-- Apply colorscheme
 -- =========================================================
 local function apply_theme()
+
   local bg = get_system_theme()
+
   vim.o.background = bg
 
   if bg == "light" then
@@ -64,18 +115,26 @@ local function apply_theme()
   end
 
   set_transparency()
+  set_cursor_ui()
+
 end
 
+
 -- =========================================================
--- ✅ Make it stick (themes re-apply highlights)
+-- Re-apply highlights after colorscheme reload
 -- =========================================================
 vim.api.nvim_create_autocmd("ColorScheme", {
+
   callback = function()
+
     set_transparency()
-  end,
+    set_cursor_ui()
+
+  end
+
 })
 
 -- =========================================================
--- 🚀 Execute
+-- Execute
 -- =========================================================
 apply_theme()

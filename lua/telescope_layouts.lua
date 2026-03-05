@@ -92,5 +92,16 @@ function M.file_browser()
   )
 end
 
+-- Telescope borders for Kansō
+vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = "#545464", bg = "NONE" })
+vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = "#7e9cd8", bg = "NONE" })
+vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = "#545464", bg = "NONE" })
+vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = "#545464", bg = "NONE" })
+
+vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = "#1f1f28", bg = "#7e9cd8", bold = true })
+vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = "#1f1f28", bg = "#957fb8", bold = true })
+vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = "#1f1f28", bg = "#dcd7ba", bold = true })
+
+
 return M
 
