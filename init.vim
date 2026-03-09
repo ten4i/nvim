@@ -9,7 +9,7 @@ set spelllang=ru
 set cursorline
 set mouse=a
 set encoding=utf-8
-" set relativenumber
+set relativenumber
 set number
 set numberwidth=1
 set noswapfile
@@ -26,6 +26,8 @@ set incsearch
 set hlsearch
 set signcolumn=yes
 set fillchars=eob:\ 
+set timeoutlen=500
+
 
 " FOLDS — MANUAL + SAVE
 set foldenable
@@ -43,7 +45,16 @@ syntax on
 let mapleader = " "
 source ~/.config/nvim/macros.vim
 
+" Disable coc for most languages
+autocmd FileType python let b:coc_enabled = 0
+autocmd FileType lua let b:coc_enabled = 0
+autocmd FileType sh let b:coc_enabled = 0
 
+" Enable coc for embedded / arduino / C family
+autocmd FileType c let b:coc_enabled = 1
+autocmd FileType cpp let b:coc_enabled = 1
+autocmd FileType arduino let b:coc_enabled = 1
+autocmd FileType ino let b:coc_enabled = 1
 
 " Case-insensitive commands for save/quit
 command! W  w
@@ -89,8 +100,6 @@ let g:indentLine_fileTypeExclude = ['help', 'startify', 'dashboard', 'packer', '
 " =========================
 
 call plug#begin('~/.config/nvim/plugged')
-
-
 Plug 'nvim-lualine/lualine.nvim'
 Plug 'romgrk/barbar.nvim'
 Plug 'nvim-telescope/telescope.nvim'
@@ -121,11 +130,10 @@ Plug 'sjl/badwolf'
 Plug 'yankcrime/direwolf'
 Plug 'pgdouyon/vim-yin-yang'
 Plug 'sphamba/smear-cursor.nvim'
-
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'stevearc/vim-arduino'
-
 call plug#end()
+
 
 " =========================
 " HOTKEYS
@@ -170,10 +178,10 @@ nnoremap <silent> <leader>fr :lua require("telescope_layouts").buffers()<CR>
 nnoremap <silent> <leader>fh :lua require('telescope.builtin').help_tags()<CR>
 nnoremap <silent> <leader>f. :Telescope file_browser path=%:p:h select_buffer=true<CR>
 nnoremap <silent> <leader>fg :Telescope live_grep<CR>
-" buffers (barbar)
-nnoremap t' :BufferNext<CR>
-nnoremap tr :BufferPrevious<CR>
-nnoremap tc :BufferClose<CR>
+" barbar buffers
+
+
+
 " clipboard
 vmap <C-c> "+y<Esc>i
 vmap <C-x> "+d<Esc>i
@@ -209,29 +217,57 @@ nnoremap <leader>bb :lua require("conform").format()<CR>
 
 " move line up
 nnoremap <S-Up> :m .-2<CR>==
-
 " move line down
 nnoremap <S-Down> :m .+1<CR>==
-
 " move selected block up
 vnoremap <S-Up> :m '<-2<CR>gv=gv
-
 " move selected block down
 vnoremap <S-Down> :m '>+1<CR>gv=gv
+"terminal 
+tnoremap <S-Right> <C-\><C-n>:BufferNext<CR>
+tnoremap <S-Left> <C-\><C-n>:BufferPrevious<CR>
+tnoremap <C-q> :BufferClose!<CR>
+
+
+" barbar buffers
+map <S-Right> :BufferNext<CR>
+map <S-Left> :BufferPrevious<CR>
+map <C-q> :BufferClose!<CR>
+
 
 " ARDUINO
+" CoC completion confirm
+" ENTER confirms selection
+inoremap <expr> <CR> coc#pum#visible() ? coc#pum#confirm() : "\<CR>"
+" TAB → next suggestion
+inoremap <expr> <Tab> coc#pum#visible() ? coc#pum#next(1) : "\<Tab>"
+" SHIFT+TAB → previous suggestion
+inoremap <expr> <S-Tab> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+
+" -------------------------------------------------
+" Open IPython terminal
+" -------------------------------------------------
+autocmd TermOpen * startinsert
+autocmd TermOpen * let g:ipython_job_id = b:terminal_job_id
+
+tnoremap <Esc> <C-\><C-n>
+command! Termpy terminal ipython
+vnoremap <leader>rr <Esc>:lua require("ipython_runner").send_selection()<CR>
+nnoremap <leader>rl :lua require("ipython_runner").run_line()<CR>
+nnoremap <leader>rf :lua require("ipython_runner").run_file()<CR>
+
 lua << EOF
 local arduino = require("arduino")
 local esp32 = require("esp32")
 
 -- Arduino
-vim.keymap.set("n","<leader>s", arduino.serial)
-vim.keymap.set("n","<leader>S", arduino.serial_restart)
-vim.keymap.set("n","<leader>c", arduino.sync)
+vim.keymap.set("n","<leader>am", arduino.serial)
+vim.keymap.set("n","<leader>ar", arduino.serial_restart)
+vim.keymap.set("n","<leader>as", arduino.sync)
+vim.keymap.set("n","<leader>au", arduino.upload)
 -- ESP32
-vim.keymap.set("n","<leader>d", esp32.upload)
-vim.keymap.set("n","<leader>m", esp32.monitor)
-
+vim.keymap.set("n","<leader>eu", esp32.upload)
+vim.keymap.set("n","<leader>em", esp32.monitor)
 EOF
 
 " =========================
@@ -251,10 +287,6 @@ pcall(require, "autocomplete")
 pcall(require, "show_hotkeys")
 pcall(require, "macros")
 pcall(require, "translator")
-
--- arduino
-pcall(require, "esp32")
-require("arduino")
 
 require("telescope").setup({
   extensions = {

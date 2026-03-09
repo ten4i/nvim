@@ -28,4 +28,23 @@ function M.sync()
   print("✔ File synchronized")
 end
 
+function M.upload()
+  local file = vim.fn.expand("%:p")
+  local dir = vim.fn.fnamemodify(file, ":h")
+
+  local cmd =
+    "arduino-cli compile --upload " ..
+    -- nano old bootloader
+    "--fqbn arduino:avr:nano:cpu=atmega328old " ..
+    -- nano 
+    -- "--fqbn arduino:avr:nano" ..
+    -- uno 
+    -- "--fqbn arduino:avr:uno" ..
+    -- mega
+    -- "--fqbn arduino:avr:mega" ..
+    "-p /dev/ttyUSB0 " ..
+    dir
+
+  vim.cmd("terminal " .. cmd)
+end
 return M
