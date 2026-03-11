@@ -213,7 +213,7 @@ nnoremap <leader>h :lua require("show_hotkeys").show()<CR>
 "translate
 nnoremap <leader>t :lua require("translator").translate_word()<CR>
 vnoremap <leader>t :lua require("translator").translate_visual()<CR>
-nnoremap <leader>bb :lua require("conform").format()<CR>
+nnoremap <leader>bf :lua require("conform").format()<CR>
 
 " move line up
 nnoremap <S-Up> :m .-2<CR>==
@@ -236,13 +236,14 @@ map <C-q> :BufferClose!<CR>
 
 
 " ARDUINO
-" CoC completion confirm
-" ENTER confirms selection
-inoremap <expr> <CR> coc#pum#visible() ? coc#pum#confirm() : "\<CR>"
-" TAB → next suggestion
-inoremap <expr> <Tab> coc#pum#visible() ? coc#pum#next(1) : "\<Tab>"
-" SHIFT+TAB → previous suggestion
-inoremap <expr> <S-Tab> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+" =========================
+" CoC completion
+" =========================
+" TAB confirm
+inoremap <expr> <Tab> coc#pum#visible() ? coc#pum#confirm() : "\<Tab>"
+" arrows navigation
+inoremap <expr> <Down> coc#pum#visible() ? coc#pum#next(1) : "\<Down>"
+inoremap <expr> <Up> coc#pum#visible() ? coc#pum#prev(1) : "\<Up>"
 
 " -------------------------------------------------
 " Open IPython terminal
@@ -251,10 +252,13 @@ autocmd TermOpen * startinsert
 autocmd TermOpen * let g:ipython_job_id = b:terminal_job_id
 
 tnoremap <Esc> <C-\><C-n>
+tnoremap :q exit
+
 command! Termpy terminal ipython
-vnoremap <leader>rr <Esc>:lua require("ipython_runner").send_selection()<CR>
-nnoremap <leader>rl :lua require("ipython_runner").run_line()<CR>
-nnoremap <leader>rf :lua require("ipython_runner").run_file()<CR>
+nnoremap <leader>ip :Termpy <CR>
+vnoremap <leader>ip <Esc>:lua require("ipython_runner").send_selection()<CR>
+nnoremap <leader>il :lua require("ipython_runner").run_line()<CR>
+nnoremap <leader>if :lua require("ipython_runner").run_file()<CR>
 
 lua << EOF
 local arduino = require("arduino")
