@@ -1,4 +1,4 @@
-" skipped eror texts 
+"kipped eror texts 
 lua << EOF
 vim.deprecate = function() end
 EOF
@@ -27,7 +27,7 @@ set hlsearch
 set signcolumn=yes
 set fillchars=eob:\ 
 set timeoutlen=500
-
+set whichwrap+=<>
 
 " FOLDS — MANUAL + SAVE
 set foldenable
@@ -55,6 +55,7 @@ autocmd FileType c let b:coc_enabled = 1
 autocmd FileType cpp let b:coc_enabled = 1
 autocmd FileType arduino let b:coc_enabled = 1
 autocmd FileType ino let b:coc_enabled = 1
+autocmd FileType python let b:coc_snippet_disable = 1
 
 " Case-insensitive commands for save/quit
 command! W  w
@@ -106,6 +107,7 @@ Plug 'nvim-telescope/telescope.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope-file-browser.nvim'
 Plug 'nvim-tree/nvim-web-devicons'
+Plug 'coder/claudecode.nvim'
 Plug 'ryanoasis/vim-devicons'
 Plug 'neovim/nvim-lspconfig'
 Plug 'hrsh7th/nvim-cmp'
@@ -117,7 +119,6 @@ Plug 'mfussenegger/nvim-dap'
 Plug 'rcarriga/nvim-dap-ui'
 Plug 'mfussenegger/nvim-dap-python'
 Plug 'nvim-neotest/nvim-nio'
-Plug 'tpope/vim-fugitive'
 Plug 'lewis6991/gitsigns.nvim'
 Plug 'plasticboy/vim-markdown'
 Plug 'windwp/nvim-autopairs'
@@ -146,8 +147,8 @@ nnoremap <leader>sv :source $MYVIMRC<CR>
 
 " splits
 nnoremap <silent> <C-h> <C-w>h
-nnoremap <silent> <C-j> <C-w>j
-nnoremap <silent> <C-k> <C-w>k
+nnoremap <silent> <C-down> <C-w>j
+nnoremap <silent> <C-up> <C-w>k
 nnoremap <silent> <C-l> <C-w>l
 " Resize splits with Alt + hjkl
 nnoremap <M-h> :vertical resize -2<CR>
@@ -178,11 +179,8 @@ nnoremap <silent> <leader>fr :lua require("telescope_layouts").buffers()<CR>
 nnoremap <silent> <leader>fh :lua require('telescope.builtin').help_tags()<CR>
 nnoremap <silent> <leader>f. :Telescope file_browser path=%:p:h select_buffer=true<CR>
 nnoremap <silent> <leader>fg :Telescope live_grep<CR>
-" barbar buffers
 
-
-
-" clipboard
+" usual clipboard's sets
 vmap <C-c> "+y<Esc>i
 vmap <C-x> "+d<Esc>i
 imap <C-v> <Esc>"+pi
@@ -196,12 +194,14 @@ noremap <Leader>y "+y
 noremap <Leader>p "+p
 noremap <Leader>Y "*y
 noremap <Leader>P "*p
+inoremap <C-h> <C-w>
 
 " lua from telescope
-nnoremap <leader>ll :lua require("telescope.builtin").find_files({
+ nnoremap <leader>ll :lua require("telescope.builtin").find_files({
       \ cwd = vim.fn.stdpath("config") .. "/lua",
       \ prompt_title = "Lua config",
       \ })<CR>
+ 
 " folds creating
 nnoremap <silent> <leader>zf zf
 vnoremap <silent> <leader>zf zf
@@ -211,54 +211,40 @@ nnoremap <silent> <leader>zx :silent! normal! zd<CR>
 "showhotkeys
 nnoremap <leader>h :lua require("show_hotkeys").show()<CR>
 "translate
-nnoremap <leader>t :lua require("translator").translate_word()<CR>
-vnoremap <leader>t :lua require("translator").translate_visual()<CR>
+nnoremap <leader>g :lua require("translator").translate_word()<CR>
+vnoremap <leader>g :lua require("translator").translate_visual()<CR>
 nnoremap <leader>bf :lua require("conform").format()<CR>
 
 " move line up
-nnoremap <S-Up> :m .-2<CR>==
+nnoremap <A-Up> :m .-2<CR>==
 " move line down
-nnoremap <S-Down> :m .+1<CR>==
+nnoremap <A-Down> :m .+1<CR>==
 " move selected block up
-vnoremap <S-Up> :m '<-2<CR>gv=gv
+vnoremap <A-Up> :m '<-2<CR>gv=gv
 " move selected block down
-vnoremap <S-Down> :m '>+1<CR>gv=gv
-"terminal 
-tnoremap <S-Right> <C-\><C-n>:BufferNext<CR>
-tnoremap <S-Left> <C-\><C-n>:BufferPrevious<CR>
-tnoremap <C-q> :BufferClose!<CR>
+vnoremap <A-Down> :m '>+1<CR>gv=gv
 
 
 " barbar buffers
-map <S-Right> :BufferNext<CR>
-map <S-Left> :BufferPrevious<CR>
-map <C-q> :BufferClose!<CR>
+nnoremap<A-Right> :BufferNext<CR>
+nnoremap <A-Left> :BufferPrevious<CR>
+nnoremap <A-c> :BufferClose!<CR>
+tnoremap <A-c> :BufferClose!<CR>
 
+" repeat
+nnoremap <leader>rp :put =repeat('', )<left><left><left><left>
 
 " ARDUINO
-" =========================
-" CoC completion
-" =========================
-" TAB confirm
+" CoC completion set
 inoremap <expr> <Tab> coc#pum#visible() ? coc#pum#confirm() : "\<Tab>"
-" arrows navigation
 inoremap <expr> <Down> coc#pum#visible() ? coc#pum#next(1) : "\<Down>"
 inoremap <expr> <Up> coc#pum#visible() ? coc#pum#prev(1) : "\<Up>"
 
-" -------------------------------------------------
-" Open IPython terminal
-" -------------------------------------------------
-autocmd TermOpen * startinsert
-autocmd TermOpen * let g:ipython_job_id = b:terminal_job_id
-
-tnoremap <Esc> <C-\><C-n>
-tnoremap :q exit
-
-command! Termpy terminal ipython
-nnoremap <leader>ip :Termpy <CR>
-vnoremap <leader>ip <Esc>:lua require("ipython_runner").send_selection()<CR>
-nnoremap <leader>il :lua require("ipython_runner").run_line()<CR>
-nnoremap <leader>if :lua require("ipython_runner").run_file()<CR>
+" snippet jump (needs - :CocInstall coc-snippets)
+imap <C-j> <Plug>(coc-snippets-expand-jump)
+vmap <C-j> <Plug>(coc-snippets-select)
+let g:coc_snippet_next = '<C-j>'
+let g:coc_snippet_prev = '<C-k>'
 
 lua << EOF
 local arduino = require("arduino")
@@ -274,6 +260,38 @@ vim.keymap.set("n","<leader>eu", esp32.upload)
 vim.keymap.set("n","<leader>em", esp32.monitor)
 EOF
 
+
+" -------------------------------------------------
+" Open IPython terminal
+" -------------------------------------------------
+"  ~/.ipython/profile_default/ipython_config.py
+
+autocmd TermOpen * IndentLinesDisable
+autocmd TermOpen * startinsert
+autocmd TermOpen * let g:ipython_job_id = b:terminal_job_id
+
+tnoremap <Esc> <C-\><C-n>
+tnoremap :q exit
+
+command! Termpy terminal ipython
+nnoremap <leader>pp :Termpy <CR>
+vnoremap <leader>pp <Esc>:lua require("ipython_runner").send_selection()<CR>
+nnoremap <leader>lp :lua require("ipython_runner").run_line()<CR>
+nnoremap <leader>fp :lua require("ipython_runner").run_file()<CR>
+
+" =========================
+" CLAUDE CODE
+" =========================
+nnoremap <leader>cc :ClaudeH<CR>
+nnoremap <leader>cf :ClaudeCodeFocus<CR>
+nnoremap <leader>cb :ClaudeCodeAdd %<CR>
+vnoremap <leader>cs :ClaudeCodeSend<CR>
+nnoremap <leader>cr :ClaudeCode --resume<CR>
+nnoremap <leader>ca :ClaudeCodeDiffAccept<CR>
+nnoremap <leader>cd :ClaudeCodeDiffDeny<CR>
+
+nnoremap <leader>cl :terminal claude<CR>                                    
+nnoremap <leader>t :terminal<CR>
 " =========================
 " STARTUP LUA
 " =========================
@@ -291,6 +309,8 @@ pcall(require, "autocomplete")
 pcall(require, "show_hotkeys")
 pcall(require, "macros")
 pcall(require, "translator")
+pcall(require, "claudecode_setup")
+
 
 require("telescope").setup({
   extensions = {
