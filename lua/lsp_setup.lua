@@ -4,6 +4,7 @@
 
 local lspconfig = require("lspconfig")
 local util = require("lspconfig.util")
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 vim.lsp.handlers["window/showMessage"] = function(_, result)
   if result and result.type == vim.lsp.protocol.MessageType.Error then
@@ -35,6 +36,7 @@ end
 lspconfig.lua_ls.setup({
   cmd = { "/opt/lua-language-server/bin/lua-language-server" },
   on_attach = on_attach,
+  capabilities = capabilities,
   root_dir = util.root_pattern(".git", ".luarc.json"),
   settings = {
     Lua = {
@@ -53,12 +55,18 @@ lspconfig.lua_ls.setup({
 -- Python
 -- =========================================================
 lspconfig.pyright.setup({
+  cmd = { "/usr/local/bin/pyright-langserver", "--stdio" },
   on_attach = on_attach,
-  root_dir = util.root_pattern(
-    "pyproject.toml",
-    "setup.py",
-    "setup.cfg",
-    ".git"
-  ),
+  capabilities = capabilities,
+  root_dir = function()
+    return vim.fn.getcwd()
+  end,
+  settings = {
+    python = {
+      analysis = {
+        typeCheckingMode = "off",
+      },
+    },
+  },
 })
 

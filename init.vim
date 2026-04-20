@@ -1,8 +1,10 @@
-"kipped eror texts 
+"          SETS
+
+"skipped eror texts 
 lua << EOF
 vim.deprecate = function() end
 EOF
-" sets, mapleader, filetypes
+" sts, mapleader, filetypes
 let g:netrw_banner = 0
 set guicursor=a:block
 set spelllang=ru
@@ -91,14 +93,12 @@ function! SaveMacro()
   execute "put = 'let @" . r . " = ' . string(@" . r . ")"
 endfunction
 
-" =========================
 " INDENTLINE
 let g:indentLine_char = '│'
 let g:indentLine_fileTypeExclude = ['help', 'startify', 'dashboard', 'packer', 'neogitstatus']
 
 " =========================
-" PLUGINS
-" =========================
+"         PLUGINS
 
 call plug#begin('~/.config/nvim/plugged')
 Plug 'nvim-lualine/lualine.nvim'
@@ -110,9 +110,6 @@ Plug 'nvim-tree/nvim-web-devicons'
 Plug 'coder/claudecode.nvim'
 Plug 'ryanoasis/vim-devicons'
 Plug 'neovim/nvim-lspconfig'
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'L3MON4D3/luaSnip'
 Plug 'tpope/vim-commentary'
 Plug 'mfussenegger/nvim-dap'
@@ -133,13 +130,13 @@ Plug 'pgdouyon/vim-yin-yang'
 Plug 'sphamba/smear-cursor.nvim'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'stevearc/vim-arduino'
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'saadparwaiz1/cmp_luasnip'
 call plug#end()
 
 
-" =========================
-" HOTKEYS
-" =========================
-
+"         HOTKEYS & lua MODULES
 
 " $MYVIMRC
 nnoremap <leader>ev :e $MYVIMRC<CR>
@@ -197,17 +194,15 @@ noremap <Leader>P "*p
 inoremap <C-h> <C-w>
 
 " lua from telescope
- nnoremap <leader>ll :lua require("telescope.builtin").find_files({
-      \ cwd = vim.fn.stdpath("config") .. "/lua",
-      \ prompt_title = "Lua config",
-      \ })<CR>
- 
+nnoremap <leader>ll :lua require("telescope.builtin").find_files({
+  \ cwd = vim.fn.stdpath("config") .. "/lua",
+  \ prompt_title = "Lua config",
+  \ })<CR>
+
 " folds creating
-nnoremap <silent> <leader>zf zf
-vnoremap <silent> <leader>zf zf
-nnoremap <silent> <leader>z za
-nnoremap <silent> <leader>Z :if &foldlevel == 0 \| execute "normal! zR" \| else \| execute "normal! zM" \| endif<CR>
-nnoremap <silent> <leader>zx :silent! normal! zd<CR>
+nnoremap <silent>  zz :if &foldlevel == 0 \| execute "normal! zR" \| else \| execute "normal! zM" \| endif<CR>
+nnoremap <silent>  zx :silent! normal! zd<CR>
+
 "showhotkeys
 nnoremap <leader>h :lua require("show_hotkeys").show()<CR>
 "translate
@@ -215,49 +210,74 @@ nnoremap <leader>g :lua require("translator").translate_word()<CR>
 vnoremap <leader>g :lua require("translator").translate_visual()<CR>
 nnoremap <leader>bf :lua require("conform").format()<CR>
 
-" move line up
-nnoremap <A-Up> :m .-2<CR>==
-" move line down
-nnoremap <A-Down> :m .+1<CR>==
-" move selected block up
-vnoremap <A-Up> :m '<-2<CR>gv=gv
-" move selected block down
-vnoremap <A-Down> :m '>+1<CR>gv=gv
-
 
 " barbar buffers
-nnoremap<A-Right> :BufferNext<CR>
-nnoremap <A-Left> :BufferPrevious<CR>
-nnoremap <A-c> :BufferClose!<CR>
-tnoremap <A-c> :BufferClose!<CR>
+nnoremap<S-Right> :BufferNext<CR>
+nnoremap <S-Left> :BufferPrevious<CR>
 
 " repeat
 nnoremap <leader>rp :put =repeat('', )<left><left><left><left>
 
-" ARDUINO
-" CoC completion set
-inoremap <expr> <Tab> coc#pum#visible() ? coc#pum#confirm() : "\<Tab>"
-inoremap <expr> <Down> coc#pum#visible() ? coc#pum#next(1) : "\<Down>"
-inoremap <expr> <Up> coc#pum#visible() ? coc#pum#prev(1) : "\<Up>"
+"coc applying enter only
 
-" snippet jump (needs - :CocInstall coc-snippets)
+" =========================
+" CoC completion (clean)
+" =========================
+
+" Helper: check if backspace
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1] =~# '\s'
+endfunction
+
+" TAB → next item OR insert tab OR trigger completion
+inoremap <silent><expr> <Tab>
+  \ coc#pum#visible() ? coc#pum#next(1) :
+  \ pumvisible() ? "\<C-n>" :
+  \ CheckBackspace() ? "\<Tab>" :
+  \ coc#refresh()
+
+" SHIFT+TAB → previous item
+inoremap <expr> <S-Tab>
+  \ coc#pum#visible() ? coc#pum#prev(1) :
+  \ pumvisible() ? "\<C-p>" : "\<C-h>"
+
+" ENTER → confirm selection
+inoremap <silent><expr> <CR>
+  \ coc#pum#visible() ? coc#pum#confirm() :
+  \ pumvisible() ? "\<C-y>" : "\<CR>"
+
+" Arrow navigation (optional but nice)
+inoremap <expr> <Down>
+  \ coc#pum#visible() ? coc#pum#next(1) :
+  \ pumvisible() ? "\<C-n>" : "\<Down>"
+
+inoremap <expr> <Up>
+  \ coc#pum#visible() ? coc#pum#prev(1) :
+  \ pumvisible() ? "\<C-p>" : "\<Up>"
+
+" Snippets (you already use C-j / C-k — keep it)
 imap <C-j> <Plug>(coc-snippets-expand-jump)
 vmap <C-j> <Plug>(coc-snippets-select)
 let g:coc_snippet_next = '<C-j>'
 let g:coc_snippet_prev = '<C-k>'
 
+
+
+" ARDUINO
+
 lua << EOF
 local arduino = require("arduino")
-local esp32 = require("esp32")
+local esp = require("esp")
 
 -- Arduino
 vim.keymap.set("n","<leader>am", arduino.serial)
 vim.keymap.set("n","<leader>ar", arduino.serial_restart)
 vim.keymap.set("n","<leader>as", arduino.sync)
 vim.keymap.set("n","<leader>au", arduino.upload)
--- ESP32
-vim.keymap.set("n","<leader>eu", esp32.upload)
-vim.keymap.set("n","<leader>em", esp32.monitor)
+-- esp
+vim.keymap.set("n","<leader>eu", esp.upload)
+vim.keymap.set("n","<leader>em", esp.monitor)
 EOF
 
 
@@ -274,14 +294,12 @@ tnoremap <Esc> <C-\><C-n>
 tnoremap :q exit
 
 command! Termpy terminal ipython
-nnoremap <leader>pp :Termpy <CR>
+noremap <leader>pp :Termpy <CR>
 vnoremap <leader>pp <Esc>:lua require("ipython_runner").send_selection()<CR>
 nnoremap <leader>lp :lua require("ipython_runner").run_line()<CR>
 nnoremap <leader>fp :lua require("ipython_runner").run_file()<CR>
 
-" =========================
 " CLAUDE CODE
-" =========================
 nnoremap <leader>cc :ClaudeH<CR>
 nnoremap <leader>cf :ClaudeCodeFocus<CR>
 nnoremap <leader>cb :ClaudeCodeAdd %<CR>
@@ -292,25 +310,25 @@ nnoremap <leader>cd :ClaudeCodeDiffDeny<CR>
 
 nnoremap <leader>cl :terminal claude<CR>                                    
 nnoremap <leader>t :terminal<CR>
-" =========================
-" STARTUP LUA
-" =========================
+
+"       LUA MODULES
 
 lua << EOF
 require("lsp_setup")
+require("autocomplete")
 require('nvim-autopairs').setup({})
 require("conform_setup")
+require("claudecode_setup")
+require("arduino")
+require("esp")
 
 pcall(require, "theme_changer")
 pcall(require, "lines")
 pcall(require, "nvim-dap")
 pcall(require, "signcolumn")
-pcall(require, "autocomplete")
 pcall(require, "show_hotkeys")
 pcall(require, "macros")
 pcall(require, "translator")
-pcall(require, "claudecode_setup")
-
 
 require("telescope").setup({
   extensions = {
@@ -325,9 +343,3 @@ require("telescope").setup({
 
 require("telescope").load_extension("file_browser")
 EOF
-
-
-augroup arduino_cpp
-  autocmd!
-  autocmd FileType arduino setlocal filetype=cpp
-augroup END

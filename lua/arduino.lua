@@ -171,4 +171,16 @@ local project_name = vim.fn.fnamemodify(dir, ":t")
   vim.cmd("startinsert")
 end
 
+-- ==========================================================
+vim.api.nvim_create_augroup("arduino_cpp", { clear = true })
+
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  group = "arduino_cpp",
+  pattern = "*.ino",
+  callback = function()
+    vim.bo.filetype = "cpp"
+end,
+})
+-- ==========================================================
+
 return M
