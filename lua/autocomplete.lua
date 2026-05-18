@@ -15,9 +15,11 @@ cmp.setup({
         ['<C-f>'] = cmp.mapping.scroll_docs(4),
         ['<C-Space>'] = cmp.mapping.complete(),
         ['<CR>'] = cmp.mapping.confirm({ select = true }),
+        ['<Down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+        ['<Up>']   = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
         ['<Tab>'] = cmp.mapping(function(fallback)
             if cmp.visible() then
-                cmp.select_next_item()
+                cmp.confirm({ select = true })
             elseif luasnip.expand_or_jumpable() then
                 luasnip.expand_or_jump()
             else
@@ -25,9 +27,7 @@ cmp.setup({
             end
         end, { 'i', 's' }),
         ['<S-Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
+            if luasnip.jumpable(-1) then
                 luasnip.jump(-1)
             else
                 fallback()
@@ -38,5 +38,12 @@ cmp.setup({
         { name = "nvim_lsp" },
         { name = "luasnip" },
     }
+})
+
+cmp.setup.filetype({ "sql", "mysql", "plsql" }, {
+    sources = {
+        { name = "vim-dadbod-completion" },
+        { name = "luasnip" },
+    },
 })
 

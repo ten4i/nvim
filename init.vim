@@ -6,14 +6,14 @@ vim.deprecate = function() end
 EOF
 " sts, mapleader, filetypes
 let g:netrw_banner = 0
-set guicursor=a:block
+set guicursor=a:block-blinkon0
 set spelllang=ru
 set cursorline
 set mouse=a
 set encoding=utf-8
-set relativenumber
-set number
-set numberwidth=1
+" set relativenumber
+" set number
+" set numberwidth=1
 set noswapfile
 set scrolloff=7
 set tabstop=4
@@ -27,9 +27,11 @@ set smartcase
 set incsearch
 set hlsearch
 set signcolumn=yes
+set conceallevel=0
 set fillchars=eob:\ 
-set timeoutlen=500
+set timeoutlen=350
 set whichwrap+=<>
+set splitbelow
 
 " FOLDS — MANUAL + SAVE
 set foldenable
@@ -45,8 +47,9 @@ filetype plugin on
 filetype indent on
 syntax on
 let mapleader = " "
+let g:coc_node_path = '/home/btbw/.nvm/versions/node/v20.20.2/bin/node'
 source ~/.config/nvim/macros.vim
-
+autocmd FileType markdown setlocal conceallevel=2
 " Disable coc for most languages
 autocmd FileType python let b:coc_enabled = 0
 autocmd FileType lua let b:coc_enabled = 0
@@ -61,7 +64,7 @@ autocmd FileType python let b:coc_snippet_disable = 1
 
 " Case-insensitive commands for save/quit
 command! W  w
-command! Q  q
+command! Q  qa!
 command! Wq wq
 command! WQ wq
 command! Wqa wqa
@@ -96,6 +99,7 @@ endfunction
 " INDENTLINE
 let g:indentLine_char = '│'
 let g:indentLine_fileTypeExclude = ['help', 'startify', 'dashboard', 'packer', 'neogitstatus']
+let g:indentLine_setConceal = 0
 
 " =========================
 "         PLUGINS
@@ -107,7 +111,6 @@ Plug 'nvim-telescope/telescope.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope-file-browser.nvim'
 Plug 'nvim-tree/nvim-web-devicons'
-Plug 'coder/claudecode.nvim'
 Plug 'ryanoasis/vim-devicons'
 Plug 'neovim/nvim-lspconfig'
 Plug 'L3MON4D3/luaSnip'
@@ -117,7 +120,7 @@ Plug 'rcarriga/nvim-dap-ui'
 Plug 'mfussenegger/nvim-dap-python'
 Plug 'nvim-neotest/nvim-nio'
 Plug 'lewis6991/gitsigns.nvim'
-Plug 'plasticboy/vim-markdown'
+Plug 'MeanderingProgrammer/render-markdown.nvim'
 Plug 'windwp/nvim-autopairs'
 Plug 'nvim-tree/nvim-web-devicons'
 Plug 'romgrk/barbar.nvim'
@@ -127,31 +130,42 @@ Plug 'webhooked/kanso.nvim'
 Plug 'sjl/badwolf'
 Plug 'yankcrime/direwolf'
 Plug 'pgdouyon/vim-yin-yang'
-Plug 'sphamba/smear-cursor.nvim'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'stevearc/vim-arduino'
 Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'tpope/vim-dadbod'
+Plug 'kristijanhusak/vim-dadbod-ui'
+Plug 'kristijanhusak/vim-dadbod-completion'
+Plug 'christoomey/vim-tmux-navigator'
 call plug#end()
 
-
 "         HOTKEYS & lua MODULES
+"navigation
+noremap <silent> <S-Left>  :BufferPrev<CR>
+noremap <silent> <S-Right> :BufferNext<CR>
+inoremap <silent> <S-Left>  <Esc>:BufferPrev<CR>
+inoremap <silent> <S-Right> <Esc>:BufferNext<CR>
+tnoremap <silent> <S-Left>  <C-\><C-n>:BufferPrev<CR>
+tnoremap <silent> <S-Right> <C-\><C-n>:BufferNext<CR>
+nnoremap <S-Down> 8j
+nnoremap <S-Up>   8k
+inoremap <S-Down> <C-o>8j
+inoremap <S-Up>   <C-o>8k
+
 
 " $MYVIMRC
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
 
 " splits
-nnoremap <silent> <C-h> <C-w>h
-nnoremap <silent> <C-down> <C-w>j
-nnoremap <silent> <C-up> <C-w>k
-nnoremap <silent> <C-l> <C-w>l
-" Resize splits with Alt + hjkl
-nnoremap <M-h> :vertical resize -2<CR>
-nnoremap <M-l> :vertical resize +2<CR>
-nnoremap <M-j> :resize +2<CR>
-nnoremap <M-k> :resize -2<CR>
+let g:tmux_navigator_no_mappings = 1
+nnoremap <silent> <A-Left>  :<C-U>TmuxNavigateLeft<CR>
+nnoremap <silent> <A-Down>  :<C-U>TmuxNavigateDown<CR>
+nnoremap <silent> <A-Up>    :<C-U>TmuxNavigateUp<CR>
+nnoremap <silent> <A-Right> :<C-U>TmuxNavigateRight<CR>
+
 " rotation
 nnoremap <leader>w <C-w> 
 " remap q
@@ -160,7 +174,7 @@ nnoremap q <nop>
 " python
 nnoremap <leader>r :!python3 %<CR>
 " cancel highlight
-nnoremap <space><esc> :nohlsearch<CR>
+nnoremap <leader>h :nohlsearch<CR>
 " debug (DAP)
 nnoremap <F5> :lua require'dap'.toggle_breakpoint()<CR>
 nnoremap <F6> :lua require'dap'.continue()<CR>
@@ -180,12 +194,7 @@ nnoremap <silent> <leader>fg :Telescope live_grep<CR>
 " usual clipboard's sets
 vmap <C-c> "+y<Esc>i
 vmap <C-x> "+d<Esc>i
-imap <C-v> <Esc>"+pi
 imap <C-z> <Esc>ui
-inoremap <C-a> <Esc>ggVG
-vnoremap <C-a> <Esc>ggVG
-xnoremap <C-a> <Esc>ggVG
-tnoremap <C-a> <Esc>ggVG
 " yank / paste system
 noremap <Leader>y "+y
 noremap <Leader>p "+p
@@ -203,17 +212,7 @@ nnoremap <leader>ll :lua require("telescope.builtin").find_files({
 nnoremap <silent>  zz :if &foldlevel == 0 \| execute "normal! zR" \| else \| execute "normal! zM" \| endif<CR>
 nnoremap <silent>  zx :silent! normal! zd<CR>
 
-"showhotkeys
-nnoremap <leader>h :lua require("show_hotkeys").show()<CR>
-"translate
-nnoremap <leader>g :lua require("translator").translate_word()<CR>
-vnoremap <leader>g :lua require("translator").translate_visual()<CR>
 nnoremap <leader>bf :lua require("conform").format()<CR>
-
-
-" barbar buffers
-nnoremap<S-Right> :BufferNext<CR>
-nnoremap <S-Left> :BufferPrevious<CR>
 
 " repeat
 nnoremap <leader>rp :put =repeat('', )<left><left><left><left>
@@ -230,9 +229,9 @@ function! CheckBackspace() abort
   return !col || getline('.')[col - 1] =~# '\s'
 endfunction
 
-" TAB → next item OR insert tab OR trigger completion
+" TAB → confirm selection OR insert tab OR trigger completion
 inoremap <silent><expr> <Tab>
-  \ coc#pum#visible() ? coc#pum#next(1) :
+  \ coc#pum#visible() ? coc#pum#confirm() :
   \ pumvisible() ? "\<C-n>" :
   \ CheckBackspace() ? "\<Tab>" :
   \ coc#refresh()
@@ -262,10 +261,11 @@ vmap <C-j> <Plug>(coc-snippets-select)
 let g:coc_snippet_next = '<C-j>'
 let g:coc_snippet_prev = '<C-k>'
 
-
+" closing buffer
+noremap <C-l> :bd! <CR>
+tnoremap <C-l> :bd! <CR>
 
 " ARDUINO
-
 lua << EOF
 local arduino = require("arduino")
 local esp = require("esp")
@@ -314,6 +314,7 @@ nnoremap <leader>t :terminal<CR>
 "       LUA MODULES
 
 lua << EOF
+require("dbui")
 require("lsp_setup")
 require("autocomplete")
 require('nvim-autopairs').setup({})
@@ -326,9 +327,8 @@ pcall(require, "theme_changer")
 pcall(require, "lines")
 pcall(require, "nvim-dap")
 pcall(require, "signcolumn")
-pcall(require, "show_hotkeys")
 pcall(require, "macros")
-pcall(require, "translator")
+pcall(require, "render_markdown")
 
 require("telescope").setup({
   extensions = {
@@ -343,3 +343,4 @@ require("telescope").setup({
 
 require("telescope").load_extension("file_browser")
 EOF
+
