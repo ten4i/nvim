@@ -1,8 +1,32 @@
 local M = {}
 
 local port = "/dev/ttyUSB0"
-local fqbn = "arduino:avr:nano:cpu=atmega328old"
-local baud = "9600"
+
+-- Board presets. ESP32 is intentionally NOT here: those projects use ESP-IDF (idf.py), not arduino-cli.
+local boards = {
+  nano = {
+    fqbn = "arduino:avr:nano:cpu=atmega328old",
+    baud = "9600",
+    includes = {
+      "/usr/lib/gcc/avr/5.4.0/include",
+      "/usr/lib/gcc/avr/5.4.0/include-fixed",
+      "/usr/lib/gcc/avr/5.4.0/../../../avr/include",
+    },
+  },
+  esp8266 = {
+    fqbn = "esp8266:esp8266:generic",
+    baud = "115200",
+    includes = {
+      "/home/ten4i/.arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/3.1.0-gcc10.3-e5f9fec/include",
+      "/home/ten4i/.arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/3.1.0-gcc10.3-e5f9fec/xtensa-lx106-elf/include",
+    },
+  },
+}
+
+local default_board = "nano"
+-- Remembers the chosen board per project directory, so switching sketches doesn't
+-- reset the selection back to default_board.
+local project_board = {}
 
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO)
@@ -25,20 +49,45 @@ local function current_dir()
   return vim.fn.fnamemodify(file, ":h")
 end
 
-local function write_clangd(dir)
+local function board_for(dir)
+  local name = project_board[dir] or default_board
+  return name, boards[name]
+end
+
+function M.board()
+  local dir = current_dir()
+  if not dir then
+    return
+  end
+
+  local names = vim.tbl_keys(boards)
+  table.sort(names)
+
+  vim.ui.select(names, { prompt = "Arduino board for " .. vim.fn.fnamemodify(dir, ":t") }, function(choice)
+    if not choice then
+      return
+    end
+    project_board[dir] = choice
+    notify("Board set to " .. choice .. " (" .. boards[choice].fqbn .. ")")
+  end)
+end
+
+local function write_clangd(dir, board)
   local clangd_path = dir .. "/.clangd"
-  local lines = {
-    "CompileFlags:",
-    "  Add: [",
-    '    "-isystem", "/usr/lib/gcc/avr/5.4.0/include",',
-    '    "-isystem", "/usr/lib/gcc/avr/5.4.0/include-fixed",',
-    '    "-isystem", "/usr/lib/gcc/avr/5.4.0/../../../avr/include"',
-    "  ]",
-  }
+  local lines = { "CompileFlags:", "  Add: [" }
+  for i, inc in ipairs(board.includes) do
+    local suffix = i < #board.includes and "," or ""
+    table.insert(lines, string.format('    "-isystem", "%s"%s', inc, suffix))
+  end
+  table.insert(lines, "  ]")
   vim.fn.writefile(lines, clangd_path)
 end
 
 function M.serial()
+  local dir = current_dir()
+  local _, board = board_for(dir or "")
+  local baud = board and board.baud or "9600"
+
   local cmd = string.format(
     "arduino-cli monitor -p %s -c baudrate=%s",
     vim.fn.shellescape(port),
@@ -70,17 +119,19 @@ function M.sync()
     return
   end
 
+  local board_name, board = board_for(dir)
+
   local build_dir = dir .. "/build"
   local db_src = build_dir .. "/compile_commands.json"
   local db_dst = dir .. "/compile_commands.json"
 
-  notify("Arduino sync started...")
+  notify("Arduino sync started (" .. board_name .. ")...")
 
   vim.fn.jobstart({
     "arduino-cli",
     "compile",
     "--no-color",
-    "--fqbn", fqbn,
+    "--fqbn", board.fqbn,
     "--only-compilation-database",
     "--build-path", build_dir,
     dir,
@@ -128,7 +179,7 @@ function M.sync()
           return
         end
 
-        write_clangd(dir)
+        write_clangd(dir, board)
 
         notify("Arduino sync done")
 
@@ -153,21 +204,22 @@ function M.upload()
     return
   end
 
+  local board_name, board = board_for(dir)
   local build_dir = dir .. "/build"
 
   local cmd = table.concat({
     "arduino-cli compile --upload",
     "--no-color",
-    "--fqbn " .. vim.fn.shellescape(fqbn),
+    "--fqbn " .. vim.fn.shellescape(board.fqbn),
     "--build-path " .. vim.fn.shellescape(build_dir),
     "-p " .. vim.fn.shellescape(port),
     vim.fn.shellescape(dir),
   }, " ")
 
-local project_name = vim.fn.fnamemodify(dir, ":t")
+  local project_name = vim.fn.fnamemodify(dir, ":t")
   vim.cmd("botright 12split")
   vim.cmd("terminal " .. cmd)
-  vim.cmd("file " .. project_name .. "_upload")
+  vim.cmd("file " .. project_name .. "_upload_" .. board_name)
   vim.cmd("startinsert")
 end
 
@@ -179,7 +231,7 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   pattern = "*.ino",
   callback = function()
     vim.bo.filetype = "cpp"
-end,
+  end,
 })
 -- ==========================================================
 

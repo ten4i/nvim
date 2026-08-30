@@ -33,6 +33,10 @@ vim.opt.timeoutlen = 350
 vim.opt.whichwrap:append("<,>")
 vim.opt.splitbelow = true
 
+-- Russian keyboard layout support (ЙЦУКЕН -> QWERTY) for Normal/Visual mode commands
+vim.opt.langmap =
+	"йцукенгшщзфывапролдячсмитьЙЦУКЕНГШЩЗФЫВАПРОЛДЯЧСМИТЬ;qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
+
 -- FOLDS — MANUAL + SAVE
 vim.opt.foldenable = true
 vim.opt.foldmethod = "manual"
@@ -46,6 +50,9 @@ vim.cmd("filetype plugin indent on")
 vim.cmd("syntax on")
 vim.g.mapleader = " "
 vim.cmd("source ~/.config/nvim/macros.vim")
+
+-- closing buffer
+vim.keymap.set("n", "<leader>bd", "<cmd>bd!<CR>", { desc = "Close buffer" })
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
@@ -147,7 +154,6 @@ Plug 'tpope/vim-dadbod'
 Plug 'kristijanhusak/vim-dadbod-ui'
 Plug 'kristijanhusak/vim-dadbod-completion'
 Plug 'christoomey/vim-tmux-navigator'
-Plug 'oskarnurm/koda.nvim.git'
 call plug#end()
 ]])
 
@@ -175,13 +181,6 @@ vim.keymap.set("v", ">", ">gv")
 vim.keymap.set("n", "<leader>ev", ":e $MYVIMRC<CR>")
 vim.keymap.set("n", "<leader>sv", ":source $MYVIMRC<CR>")
 
--- splits
-vim.g.tmux_navigator_no_mappings = 1
-vim.keymap.set("n", "<A-Left>", ":<C-U>TmuxNavigateLeft<CR>", { silent = true })
-vim.keymap.set("n", "<A-Down>", ":<C-U>TmuxNavigateDown<CR>", { silent = true })
-vim.keymap.set("n", "<A-Up>", ":<C-U>TmuxNavigateUp<CR>", { silent = true })
-vim.keymap.set("n", "<A-Right>", ":<C-U>TmuxNavigateRight<CR>", { silent = true })
-
 -- rotation
 vim.keymap.set("n", "<leader>w", "<C-w>")
 -- remap q
@@ -206,15 +205,45 @@ vim.keymap.set("n", "<leader>fr", function() require("telescope_layouts").buffer
 vim.keymap.set("n", "<leader>fh", function() require("telescope.builtin").help_tags() end, { silent = true })
 vim.keymap.set("n", "<leader>f.", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", { silent = true })
 vim.keymap.set("n", "<leader>fg", ":Telescope live_grep<CR>", { silent = true })
+vim.keymap.set("n", "<C-g>", function() require("telescope_layouts").live_grep() end, { silent = true })
 
--- wrap visual selection in a markdown code fence
+-- wrap visual selection in inline code (`text`)
+local function wrap_inline_code()
+  vim.cmd("normal! \27")
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  vim.fn.cursor(end_pos[2], end_pos[3])
+  vim.cmd("normal! a`")
+  vim.fn.cursor(start_pos[2], start_pos[3])
+  vim.cmd("normal! i`")
+end
+vim.keymap.set("x", "<C-y>", wrap_inline_code, { silent = true })
+
+-- wrap word under cursor in inline code (`text`)
+vim.keymap.set("n", "<C-y>", function()
+  vim.cmd("normal! viw")
+  wrap_inline_code()
+end, { silent = true })
+
+-- wrap visual selection in a markdown code fence (```text```)
 local function wrap_code_fence()
-  local start_line = vim.fn.line("'<")
-  local end_line = vim.fn.line("'>")
+  -- can't use '< / '> here: those marks are only set once Visual mode
+  -- is actually left, but this callback runs while still inside it
+  local start_line = math.min(vim.fn.line("v"), vim.fn.line("."))
+  local end_line = math.max(vim.fn.line("v"), vim.fn.line("."))
+  vim.cmd("normal! \27")
   vim.fn.append(end_line, "```")
   vim.fn.append(start_line - 1, "```")
 end
-vim.keymap.set("x", "<C-y>", wrap_code_fence, { silent = true })
+vim.keymap.set("x", "<C-S-y>", wrap_code_fence, { silent = true })
+
+-- wrap current line in inline code (`text`) without leaving insert mode
+vim.keymap.set("i", "<C-y>", function()
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local line = vim.api.nvim_get_current_line()
+  vim.api.nvim_set_current_line("`" .. line .. "`")
+  vim.api.nvim_win_set_cursor(0, { row, col + 1 })
+end, { silent = true })
 
 -- usual clipboard's sets
 vim.keymap.set("v", "<C-c>", '"+y<Esc>i')
@@ -315,9 +344,11 @@ vim.keymap.set("i", "<Up>", function()
   end
 end, { expr = true })
 
--- Snippets (you already use C-j / C-k — keep it)
-vim.keymap.set("i", "<C-j>", "<Plug>(coc-snippets-expand-jump)", { remap = true })
-vim.keymap.set("v", "<C-j>", "<Plug>(coc-snippets-select)", { remap = true })
+-- Snippets: coc.nvim core handles placeholder jumping for LSP-provided
+-- snippets (e.g. clangd function-call params) via these two globals —
+-- no coc-snippets extension needed. Do NOT also map <C-j>/<C-k> manually
+-- in insert mode: that hijacks the key globally and breaks the fallback
+-- when no snippet session is active.
 vim.g.coc_snippet_next = "<C-j>"
 vim.g.coc_snippet_prev = "<C-k>"
 
@@ -325,10 +356,6 @@ vim.g.coc_snippet_prev = "<C-k>"
 -- .zshrc, so the nvm PATH export never applies there. Point coc directly
 -- at the node binary to avoid depending on shell PATH.
 vim.g.coc_node_path = vim.fn.expand("~/.nvm/versions/node/v24.19.0/bin/node")
-
--- closing buffer
-vim.keymap.set("n", "<C-l>", ":bd!<CR>")
-vim.keymap.set("t", "<C-l>", ":bd!<CR>")
 
 -- ARDUINO
 local arduino = require("arduino")
@@ -339,9 +366,14 @@ vim.keymap.set("n", "<leader>am", arduino.serial)
 vim.keymap.set("n", "<leader>ar", arduino.serial_restart)
 vim.keymap.set("n", "<leader>as", arduino.sync)
 vim.keymap.set("n", "<leader>au", arduino.upload)
--- esp
+vim.keymap.set("n", "<leader>ab", arduino.board)
+-- Esp (ESP-IDF)
+vim.keymap.set("n", "<leader>eb", esp.build)
+vim.keymap.set("n", "<leader>ef", esp.flash)
 vim.keymap.set("n", "<leader>eu", esp.upload)
 vim.keymap.set("n", "<leader>em", esp.monitor)
+vim.keymap.set("n", "<leader>ec", esp.menuconfig)
+vim.keymap.set("n", "<leader>et", esp.set_target)
 
 -- -------------------------------------------------
 -- Open IPython terminal
@@ -366,17 +398,57 @@ vim.keymap.set("v", "<leader>pp", function() require("ipython_runner").send_sele
 vim.keymap.set("n", "<leader>lp", function() require("ipython_runner").run_line() end)
 vim.keymap.set("n", "<leader>fp", function() require("ipython_runner").run_file() end)
 
--- CLAUDE CODE
-vim.keymap.set("n", "<leader>cc", ":ClaudeH<CR>")
-vim.keymap.set("n", "<leader>cf", ":ClaudeCodeFocus<CR>")
-vim.keymap.set("n", "<leader>cb", ":ClaudeCodeAdd %<CR>")
-vim.keymap.set("v", "<leader>cs", ":ClaudeCodeSend<CR>")
-vim.keymap.set("n", "<leader>cr", ":ClaudeCode --resume<CR>")
-vim.keymap.set("n", "<leader>ca", ":ClaudeCodeDiffAccept<CR>")
-vim.keymap.set("n", "<leader>cd", ":ClaudeCodeDiffDeny<CR>")
-
 vim.keymap.set("n", "<leader>cl", ":terminal claude<CR>")
 vim.keymap.set("n", "<leader>t", ":terminal<CR>")
+
+
+-- LSP diagnostics (buffer-local, set on LSP attach)
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local opts = { buffer = args.buf, silent = true }
+    vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
+    vim.keymap.set("n", "]d", function() vim.diagnostic.jump({ count = 1 }) end, opts)
+    vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, opts)
+  end,
+})
+
+-- DBUI
+local function db_connect()
+  local dbname = vim.fn.input("Database (empty = no db): ")
+  local url = "mysql://btbw:" .. (vim.env.MYSQL_PASS or "") .. "@192.168.1.120:3306/" .. dbname
+  vim.b.db = url
+  local label = dbname == "" and "MySQL server (no db)" or dbname
+  vim.notify(" Connected to " .. label)
+end
+
+vim.keymap.set("n", "<leader>db", "<cmd>DBUIToggle<CR>", { silent = true, desc = "DBUI toggle" })
+vim.keymap.set("n", "<leader>dc", db_connect, { desc = "DBUI connect" })
+
+-- SQL buffer mappings (buffer-local, set on FileType=sql)
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "sql",
+  callback = function()
+    local opts = { buffer = true, silent = true }
+
+    -- execute visual selection
+    vim.keymap.set("x", "<leader>e", function()
+      local db = vim.b.db or vim.g.db or ""
+      vim.cmd("'<,'>DB " .. db)
+    end, opts)
+
+    -- execute current line
+    vim.keymap.set("n", "<leader>e", function()
+      local db = vim.b.db or vim.g.db or ""
+      vim.cmd(".DB " .. db)
+    end, opts)
+
+    -- execute whole file
+    vim.keymap.set("n", "<leader>S", function()
+      local db = vim.b.db or vim.g.db or ""
+      vim.cmd("%DB " .. db)
+    end, opts)
+  end,
+})
 
 -- =========================
 --       LUA MODULES
@@ -387,7 +459,6 @@ require("lsp_setup")
 require("autocomplete")
 require("nvim-autopairs").setup({})
 require("conform_setup")
-require("claudecode_setup")
 require("arduino")
 require("esp")
 
@@ -399,7 +470,15 @@ pcall(require, "signcolumn")
 pcall(require, "macros")
 pcall(require, "render_markdown")
 
+local telescope_actions = require("telescope.actions")
+
 require("telescope").setup({
+  defaults = {
+    mappings = {
+      i = { ["<C-g>"] = telescope_actions.send_to_qflist + telescope_actions.open_qflist },
+      n = { ["<C-g>"] = telescope_actions.send_to_qflist + telescope_actions.open_qflist },
+    },
+  },
   pickers = {
     find_files = {
       hidden = true,

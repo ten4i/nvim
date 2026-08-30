@@ -13,29 +13,10 @@ vim.lsp.handlers["window/showMessage"] = function(_, result)
 end
 
 -- =========================================================
--- on_attach
--- =========================================================
-
-local function on_attach(_, bufnr)
-  local opts = { buffer = bufnr, silent = true }
-
-  vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
-
-  vim.keymap.set("n", "]d", function()
-    vim.diagnostic.jump({ count = 1 })
-  end, opts)
-
-  vim.keymap.set("n", "[d", function()
-    vim.diagnostic.jump({ count = -1 })
-  end, opts)
-end
-
--- =========================================================
 -- Lua
 -- =========================================================
 lspconfig.lua_ls.setup({
   cmd = { vim.fn.expand("~/.local/share/lua-language-server/bin/lua-language-server") },
-  on_attach = on_attach,
   capabilities = capabilities,
   root_dir = util.root_pattern(".git", ".luarc.json"),
   settings = {
@@ -56,7 +37,6 @@ lspconfig.lua_ls.setup({
 -- =========================================================
 lspconfig.pyright.setup({
   cmd = { "pyright-langserver", "--stdio" },
-  on_attach = on_attach,
   capabilities = capabilities,
   root_dir = function()
     return vim.fn.getcwd()
