@@ -1,7 +1,9 @@
 local M = {}
 
-local PORT = "/dev/ttyUSB0"
-local IDF_EXPORT = vim.fn.expand("$HOME/EspIdfToolchain/export.sh")
+-- local DEFAULT_PORT = "/dev/ttyUSB0"
+local DEFAULT_PORT = "/dev/ttyACM0"
+local last_port = DEFAULT_PORT
+local IDF_EXPORT = vim.fn.expand("$HOME/MCU/EspIdfToolchain/export.sh")
 local SCRIPT = vim.fn.expand("$HOME/Scripts/IdfSyncUpload.sh")
 
 -- Target chip is NOT chosen here. ESP-IDF stores it per-project in
@@ -9,11 +11,24 @@ local SCRIPT = vim.fn.expand("$HOME/Scripts/IdfSyncUpload.sh")
 -- per project / when switching chips, not on every build.
 
 -- Toolchains actually installed (via install.sh esp32,esp32s3). Add more
--- here after running `~/EspIdfToolchain/install.sh <target>`.
+-- here after running `~/MCU/EspIdfToolchain/install.sh <target>`.
 local IDF_TARGETS = { "esp32", "esp32s3" }
 
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO)
+end
+
+-- Ask which port to bootload on, pre-filled with the last one used
+-- (or DEFAULT_PORT the first time). Calls back with the chosen port,
+-- or does nothing if the prompt is cancelled.
+local function ask_port(callback)
+  vim.ui.input({ prompt = "Port: ", default = last_port }, function(port)
+    if not port or port == "" then
+      return
+    end
+    last_port = port
+    callback(port)
+  end)
 end
 
 local function current_file()
@@ -77,14 +92,14 @@ local function read_target(root)
   return nil
 end
 
--- Ask esptool what's actually plugged into PORT. Returns an IDF target
+-- Ask esptool what's actually plugged into the given port. Returns an IDF target
 -- string (e.g. "esp32s3") or nil + raw esptool output on failure.
-local function detect_connected_chip()
+local function detect_connected_chip(port)
   local cmd = string.format(
     "bash -c %s",
     vim.fn.shellescape(string.format(
       ". %s > /dev/null 2>&1 && esptool.py --port %s chip_id 2>&1",
-      IDF_EXPORT, PORT
+      IDF_EXPORT, port
     ))
   )
   local output = vim.fn.system(cmd)
@@ -125,16 +140,18 @@ function M.flash()
   if not root then
     return
   end
-  notify("Build + flash: " .. root)
-  local cmd = string.format(
-    "%s --flash --port %s %s",
-    vim.fn.shellescape(SCRIPT), vim.fn.shellescape(PORT), vim.fn.shellescape(root)
-  )
-  run(cmd, on_sync_exit("Flash"))
+  ask_port(function(port)
+    notify("Build + flash: " .. root)
+    local cmd = string.format(
+      "%s --flash --port %s %s",
+      vim.fn.shellescape(SCRIPT), vim.fn.shellescape(port), vim.fn.shellescape(root)
+    )
+    run(cmd, on_sync_exit("Flash"))
+  end)
 end
 
 -- build, flash, then attach the serial monitor. Auto-detects the chip
--- actually plugged into PORT (via esptool) and compares it against the
+-- actually plugged into the chosen port (via esptool) and compares it against the
 -- project's current sdkconfig target: same chip -> straight to build+
 -- flash+monitor, different chip -> ask which board (list on top),
 -- rebuild for it, then flash+monitor.
@@ -144,46 +161,48 @@ function M.upload()
     return
   end
 
-  local function do_upload(target)
-    notify("Build + flash + monitor (" .. target .. "): " .. root)
-    local cmd = string.format(
-      "%s --target %s --flash --monitor --port %s %s",
-      vim.fn.shellescape(SCRIPT), vim.fn.shellescape(target),
-      vim.fn.shellescape(PORT), vim.fn.shellescape(root)
-    )
-    run(cmd)
-  end
-
-  notify("Detecting board on " .. PORT .. "...")
-  local detected = detect_connected_chip()
-  if not detected then
-    notify("Could not detect a board on " .. PORT .. " (check it's plugged in / port is correct)", vim.log.levels.ERROR)
-    return
-  end
-
-  local current = read_target(root)
-  if detected == current then
-    do_upload(detected)
-    return
-  end
-
-  local options = { detected }
-  for _, t in ipairs(IDF_TARGETS) do
-    if t ~= detected then
-      table.insert(options, t)
+  ask_port(function(port)
+    local function do_upload(target)
+      notify("Build + flash + monitor (" .. target .. "): " .. root)
+      local cmd = string.format(
+        "%s --target %s --flash --monitor --port %s %s",
+        vim.fn.shellescape(SCRIPT), vim.fn.shellescape(target),
+        vim.fn.shellescape(port), vim.fn.shellescape(root)
+      )
+      run(cmd)
     end
-  end
 
-  vim.ui.select(options, {
-    prompt = string.format(
-      "Project is set to '%s' but detected '%s' on %s — pick target:",
-      current or "unset", detected, PORT
-    ),
-  }, function(choice)
-    if not choice then
+    notify("Detecting board on " .. port .. "...")
+    local detected = detect_connected_chip(port)
+    if not detected then
+      notify("Could not detect a board on " .. port .. " (check it's plugged in / port is correct)", vim.log.levels.ERROR)
       return
     end
-    do_upload(choice)
+
+    local current = read_target(root)
+    if detected == current then
+      do_upload(detected)
+      return
+    end
+
+    local options = { detected }
+    for _, t in ipairs(IDF_TARGETS) do
+      if t ~= detected then
+        table.insert(options, t)
+      end
+    end
+
+    vim.ui.select(options, {
+      prompt = string.format(
+        "Project is set to '%s' but detected '%s' on %s — pick target:",
+        current or "unset", detected, port
+      ),
+    }, function(choice)
+      if not choice then
+        return
+      end
+      do_upload(choice)
+    end)
   end)
 end
 
@@ -193,7 +212,7 @@ function M.monitor()
     "bash -c %s",
     vim.fn.shellescape(string.format(
       ". %s > /dev/null 2>&1 && idf.py -p %s monitor",
-      IDF_EXPORT, PORT
+      IDF_EXPORT, last_port
     ))
   )
   run(cmd)

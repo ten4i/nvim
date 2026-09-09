@@ -6,5 +6,7 @@
   },
   "clangd.arguments": [
     "--query-driver=/home/ten4i/.espressif/tools/**/bin/*,/home/ten4i/.arduino15/packages/**/bin/*"
-  ]
+  ],
+  "coc.source.dictionary.enable": true,
+  "coc.source.dictionary.priority": 9
 }

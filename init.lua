@@ -276,6 +276,9 @@ vim.keymap.set("n", "zx", ":silent! normal! zd<CR>", { silent = true })
 
 vim.keymap.set("n", "<leader>bf", function() require("conform").format() end)
 
+-- rebuild the vault-wide dictionary used for coc completion in markdown
+vim.keymap.set("n", "<leader>vd", function() require("vault_dict").regenerate() end, { desc = "Rebuild vault dictionary" })
+
 -- repeat
 vim.keymap.set("n", "<leader>rp", ":put =repeat('', )<Left><Left><Left><Left>")
 
@@ -457,6 +460,7 @@ vim.api.nvim_create_autocmd("FileType", {
 require("dbui")
 require("lsp_setup")
 require("autocomplete")
+require("vault_dict").setup()
 require("nvim-autopairs").setup({})
 require("conform_setup")
 require("arduino")
