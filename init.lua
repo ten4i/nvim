@@ -6,7 +6,6 @@
 vim.deprecate = function() end
 
 vim.g.netrw_banner = 0
--- vim.opt.guicursor = "a:block-blinkon0"
 vim.opt.spelllang = "ru"
 vim.opt.cursorline = true
 vim.opt.mouse = "a"
@@ -51,8 +50,6 @@ vim.cmd("syntax on")
 vim.g.mapleader = " "
 vim.cmd("source ~/.config/nvim/macros.vim")
 
--- closing buffer
-vim.keymap.set("n", "<leader>bd", "<cmd>bd!<CR>", { desc = "Close buffer" })
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
@@ -61,7 +58,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- Disable coc for most languages
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "python", "lua", "sh" },
+  pattern = { "python", "lua" },
   callback = function() vim.b.coc_enabled = 0 end,
 })
 
@@ -173,6 +170,24 @@ vim.keymap.set("n", "<S-Up>", "8k")
 vim.keymap.set("v", "<S-Down>", "8j")
 vim.keymap.set("v", "<S-Up>", "8k")
 
+-- Tabs navigation with leader key
+vim.keymap.set("n", "bd", "<cmd>bw!<CR>", { desc = "Close buffer" })
+vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
+  callback = function()
+    vim.schedule(function()
+      for _, b in ipairs(vim.api.nvim_list_bufs()) do
+        local name = vim.api.nvim_buf_get_name(b)
+        if vim.bo[b].buflisted and name ~= "" and vim.fn.isdirectory(name) == 1
+            and #vim.fn.win_findbuf(b) == 0 then
+          pcall(vim.api.nvim_buf_delete, b, { force = true })
+        end
+      end
+    end)
+  end,
+})
+vim.keymap.set("n", "bp", ":BufferPrevious<CR>")
+vim.keymap.set("n", "bn", ":BufferNext<CR>")
+
 -- keep selection after indent/outdent so < and > can be pressed repeatedly
 vim.keymap.set("v", "<", "<gv")
 vim.keymap.set("v", ">", ">gv")
@@ -199,12 +214,12 @@ vim.keymap.set("n", "<F4>", function() require("dap").step_out() end)
 vim.keymap.set("n", "<F7>", function() require("dap").terminate() end)
 
 -- Telescope smart layout
-vim.keymap.set("n", "<leader>fb", function() require("telescope_layouts").file_browser() end, { silent = true })
-vim.keymap.set("n", "<leader>ff", function() require("telescope_layouts").find_files() end, { silent = true })
-vim.keymap.set("n", "<leader>fr", function() require("telescope_layouts").buffers() end, { silent = true })
-vim.keymap.set("n", "<leader>fh", function() require("telescope.builtin").help_tags() end, { silent = true })
-vim.keymap.set("n", "<leader>f.", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", { silent = true })
-vim.keymap.set("n", "<leader>fg", ":Telescope live_grep<CR>", { silent = true })
+vim.keymap.set("n", "fb", function() require("telescope_layouts").file_browser() end, { silent = true })
+vim.keymap.set("n", "ff", function() require("telescope_layouts").find_files() end, { silent = true })
+vim.keymap.set("n", "fr", function() require("telescope_layouts").buffers() end, { silent = true })
+vim.keymap.set("n", "fh", function() require("telescope.builtin").help_tags() end, { silent = true })
+vim.keymap.set("n", "f.", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", { silent = true })
+vim.keymap.set("n", "fg", ":Telescope live_grep<CR>", { silent = true })
 vim.keymap.set("n", "<C-g>", function() require("telescope_layouts").live_grep() end, { silent = true })
 
 -- wrap visual selection in inline code (`text`)
@@ -473,6 +488,8 @@ pcall(require, "nvim-dap")
 pcall(require, "signcolumn")
 pcall(require, "macros")
 pcall(require, "render_markdown")
+-- pcall(require, "mode_popup")
+pcall(require, "mode_colors")
 
 local telescope_actions = require("telescope.actions")
 

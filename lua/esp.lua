@@ -10,9 +10,10 @@ local SCRIPT = vim.fn.expand("$HOME/Scripts/IdfSyncUpload.sh")
 -- sdkconfig via `idf.py set-target` (see M.set_target) — pass it once
 -- per project / when switching chips, not on every build.
 
--- Toolchains actually installed (via install.sh esp32,esp32s3). Add more
--- here after running `~/MCU/EspIdfToolchain/install.sh <target>`.
-local IDF_TARGETS = { "esp32", "esp32s3" }
+-- Since IDF 5.x, toolchains are unified per architecture (xtensa-esp-elf
+-- covers esp32/s2/s3, riscv32-esp-elf covers c2/c3/c6/h2/p4), both already
+-- installed — so every target IDF supports is listed here.
+local IDF_TARGETS = { "esp32", "esp32s2", "esp32s3", "esp32c2", "esp32c3", "esp32c6", "esp32h2", "esp32p4" }
 
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO)
@@ -68,12 +69,23 @@ local function project_root()
   return vim.fn.fnamemodify(found[1], ":h")
 end
 
-local function run(cmd, on_exit)
+-- Buffer names must be unique across the session, so a repeat run (e.g.
+-- flashing twice) falls back to appending the buffer number.
+local function set_label(bufnr, label)
+  if not pcall(vim.api.nvim_buf_set_name, bufnr, label) then
+    pcall(vim.api.nvim_buf_set_name, bufnr, label .. " " .. bufnr)
+  end
+end
+
+local function run(cmd, on_exit, label)
   vim.cmd("tabnew")
   if on_exit then
     vim.fn.termopen(cmd, { on_exit = function(_, code) on_exit(code) end })
   else
     vim.fn.termopen(cmd)
+  end
+  if label then
+    set_label(vim.api.nvim_get_current_buf(), label)
   end
   vim.cmd("startinsert")
 end
@@ -131,7 +143,7 @@ function M.build()
   end
   notify("idf.py build: " .. root)
   local cmd = string.format("%s %s", vim.fn.shellescape(SCRIPT), vim.fn.shellescape(root))
-  run(cmd, on_sync_exit("Build"))
+  run(cmd, on_sync_exit("Build"), "IDF:build")
 end
 
 -- build, then flash (no monitor)
@@ -146,7 +158,7 @@ function M.flash()
       "%s --flash --port %s %s",
       vim.fn.shellescape(SCRIPT), vim.fn.shellescape(port), vim.fn.shellescape(root)
     )
-    run(cmd, on_sync_exit("Flash"))
+    run(cmd, on_sync_exit("Flash"), "IDF:flash")
   end)
 end
 
@@ -169,7 +181,7 @@ function M.upload()
         vim.fn.shellescape(SCRIPT), vim.fn.shellescape(target),
         vim.fn.shellescape(port), vim.fn.shellescape(root)
       )
-      run(cmd)
+      run(cmd, nil, "IDF:upload")
     end
 
     notify("Detecting board on " .. port .. "...")
@@ -208,14 +220,18 @@ end
 
 -- serial monitor only, no build/flash
 function M.monitor()
+  local root = project_root()
+  if not root then
+    return
+  end
   local cmd = string.format(
     "bash -c %s",
     vim.fn.shellescape(string.format(
-      ". %s > /dev/null 2>&1 && idf.py -p %s monitor",
-      IDF_EXPORT, last_port
+      ". %s > /dev/null 2>&1 && cd %s && idf.py -p %s monitor",
+      IDF_EXPORT, vim.fn.shellescape(root), last_port
     ))
   )
-  run(cmd)
+  run(cmd, nil, "IDF:monitor")
 end
 
 function M.menuconfig()
@@ -230,7 +246,7 @@ function M.menuconfig()
       IDF_EXPORT, vim.fn.shellescape(root)
     ))
   )
-  run(cmd)
+  run(cmd, nil, "IDF:menuconfig")
 end
 
 -- idf.py set-target <chip>, then rebuild (regenerates sdkconfig,
@@ -249,7 +265,7 @@ function M.set_target()
       "%s --target %s %s",
       vim.fn.shellescape(SCRIPT), vim.fn.shellescape(target), vim.fn.shellescape(root)
     )
-    run(cmd, on_sync_exit("set-target " .. target))
+    run(cmd, on_sync_exit("set-target " .. target), "IDF:set-target")
   end)
 end
 
