@@ -32,21 +32,5 @@ lspconfig.lua_ls.setup({
 })
 
 
--- =========================================================
--- Python
--- =========================================================
-lspconfig.pyright.setup({
-  cmd = { "pyright-langserver", "--stdio" },
-  capabilities = capabilities,
-  root_dir = function()
-    return vim.fn.getcwd()
-  end,
-  settings = {
-    python = {
-      analysis = {
-        typeCheckingMode = "off",
-      },
-    },
-  },
-})
+-- Python is handled by coc.nvim (coc-pyright), not the native LSP client
 

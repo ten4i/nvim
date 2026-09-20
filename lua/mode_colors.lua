@@ -40,12 +40,16 @@ local function get_hl(name)
   return vim.api.nvim_get_hl(0, { name = name, link = false })
 end
 
--- koda has no purple, so visual matches the statusline colors (lines.lua)
-local visual_purple = { light = 0x957fb8, dark = 0xaf87df }
+-- match the statusline mode colors (lines.lua); the rest comes from `sources`
+local fixed = {
+  insert  = { light = 0x7e9cd8, dark = 0x87afdf },
+  visual  = { light = 0x957fb8, dark = 0xaf87df },
+  replace = { light = 0xe46876, dark = 0xd75f5f },
+}
 
 local function color_of(key)
-  if key == "visual" then
-    return visual_purple[vim.o.background] or visual_purple.dark
+  if fixed[key] then
+    return fixed[key][vim.o.background] or fixed[key].dark
   end
   local hl = get_hl(sources[key])
   return hl.fg or get_hl("Normal").fg or 0xffffff

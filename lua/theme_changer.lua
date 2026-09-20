@@ -73,20 +73,17 @@ end
 -- =========================================================
 -- Apply theme
 -- =========================================================
-local koda_setup_done = false
-
 local function apply_theme()
 
   local bg = get_system_theme()
 
   vim.o.background = bg
 
-  if not koda_setup_done then
-    require("koda").setup({})
-    koda_setup_done = true
+  if bg == "dark" then
+    vim.cmd.colorscheme("koda-dark")   -- dark theme
+  else
+    vim.cmd.colorscheme("yang")   -- light theme
   end
-
-  vim.cmd.colorscheme("koda")
 
   transparent()
   darken_visual()

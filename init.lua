@@ -26,6 +26,7 @@ vim.opt.smartcase = true
 vim.opt.incsearch = true
 vim.opt.hlsearch = true
 vim.opt.signcolumn = "yes"
+vim.opt.pumheight = 10
 vim.opt.conceallevel = 0
 vim.opt.fillchars = { eob = " " }
 vim.opt.timeoutlen = 350
@@ -36,14 +37,20 @@ vim.opt.splitbelow = true
 vim.opt.langmap =
 	"йцукенгшщзфывапролдячсмитьЙЦУКЕНГШЩЗФЫВАПРОЛДЯЧСМИТЬ;qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
 
--- FOLDS — MANUAL + SAVE
+-- FOLDS: automatic, by code structure (treesitter); indent fallback when no parser
 vim.opt.foldenable = true
-vim.opt.foldmethod = "manual"
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
 vim.opt.foldnestmax = 10
--- save FOLDS only
-vim.opt.viewoptions = "folds"
+vim.api.nvim_create_autocmd("FileType", {
+  callback = function(args)
+    if not pcall(vim.treesitter.get_parser, args.buf) then
+      vim.wo.foldmethod = "indent"
+    end
+  end,
+})
 
 vim.cmd("filetype plugin indent on")
 vim.cmd("syntax on")
@@ -82,24 +89,6 @@ vim.api.nvim_create_user_command("WQa", "wqa", {})
 vim.api.nvim_create_user_command("Qa", "qa", {})
 vim.api.nvim_create_user_command("QA", "qa", {})
 
--- Dir for views
-vim.opt.viewdir = vim.fn.expand("~/.local/state/nvim/view//")
-pcall(vim.fn.mkdir, vim.o.viewdir, "p")
-
-local persist_folds = vim.api.nvim_create_augroup("PersistFolds", { clear = true })
--- сохранить фолды при выходе из окна
-vim.api.nvim_create_autocmd("BufWinLeave", {
-  group = persist_folds,
-  pattern = "*",
-  callback = function() pcall(vim.cmd, "mkview") end,
-})
--- загрузить фолды при входе
-vim.api.nvim_create_autocmd("BufWinEnter", {
-  group = persist_folds,
-  pattern = "*",
-  callback = function() pcall(vim.cmd, "loadview") end,
-})
-
 -- MACROS
 function _G.SaveMacro()
   local r = vim.fn.nr2char(vim.fn.getchar())
@@ -135,7 +124,9 @@ Plug 'MeanderingProgrammer/render-markdown.nvim'
 Plug 'windwp/nvim-autopairs'
 Plug 'nvim-tree/nvim-web-devicons'
 Plug 'romgrk/barbar.nvim'
+Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'}
 Plug 'lukas-reineke/indent-blankline.nvim'
+Plug 'folke/which-key.nvim'
 Plug 'stevearc/conform.nvim'
 Plug 'webhooked/kanso.nvim'
 Plug 'oskarnurm/koda.nvim'
@@ -279,7 +270,7 @@ vim.keymap.set("n", "<leader>ll", function()
   })
 end)
 
--- folds creating
+-- toggle: open all folds / close all folds
 vim.keymap.set("n", "zz", function()
   if vim.wo.foldlevel == 0 then
     vim.cmd("normal! zR")
@@ -287,7 +278,6 @@ vim.keymap.set("n", "zz", function()
     vim.cmd("normal! zM")
   end
 end, { silent = true })
-vim.keymap.set("n", "zx", ":silent! normal! zd<CR>", { silent = true })
 
 vim.keymap.set("n", "<leader>bf", function() require("conform").format() end)
 
@@ -484,6 +474,7 @@ require("esp")
 pcall(require, "theme_changer")
 pcall(require, "lines")
 pcall(require, "indent_guides")
+pcall(require, "key_hints")
 pcall(require, "nvim-dap")
 pcall(require, "signcolumn")
 pcall(require, "macros")
