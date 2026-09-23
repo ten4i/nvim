@@ -99,3 +99,28 @@ vim.api.nvim_create_autocmd("FileType", {
     require("ibl").setup_buffer(args.buf, { enabled = true })
   end,
 })
+
+-- ibl merges per-buffer config on top of the global config, so the buffer-local
+-- `enabled = true` set above always wins over a plain global :IBLDisable in yaml
+-- buffers. Redefine IBLEnable/IBLDisable/IBLToggle (on VimEnter, so this runs
+-- after ibl's own after/plugin/commands.lua) to also clear the buffer override.
+vim.api.nvim_create_autocmd("VimEnter", {
+  once = true,
+  callback = function()
+    vim.api.nvim_create_user_command("IBLEnable", function()
+      require("ibl").setup_buffer(0, { enabled = true })
+      require("ibl").update({ enabled = true })
+    end, { bar = true, desc = "Enables indent-blankline" })
+
+    vim.api.nvim_create_user_command("IBLDisable", function()
+      require("ibl").setup_buffer(0, { enabled = false })
+      require("ibl").update({ enabled = false })
+    end, { bar = true, desc = "Disables indent-blankline" })
+
+    vim.api.nvim_create_user_command("IBLToggle", function()
+      local enabled = require("ibl.config").get_config(0).enabled
+      require("ibl").setup_buffer(0, { enabled = not enabled })
+      require("ibl").update({ enabled = not enabled })
+    end, { bar = true, desc = "Toggles indent-blankline on and off" })
+  end,
+})

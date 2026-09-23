@@ -122,8 +122,6 @@ Plug 'nvim-neotest/nvim-nio'
 Plug 'lewis6991/gitsigns.nvim'
 Plug 'MeanderingProgrammer/render-markdown.nvim'
 Plug 'windwp/nvim-autopairs'
-Plug 'nvim-tree/nvim-web-devicons'
-Plug 'romgrk/barbar.nvim'
 Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'}
 Plug 'lukas-reineke/indent-blankline.nvim'
 Plug 'folke/which-key.nvim'
@@ -144,6 +142,14 @@ Plug 'kristijanhusak/vim-dadbod-completion'
 Plug 'christoomey/vim-tmux-navigator'
 call plug#end()
 ]])
+
+-- barbar (tabs) — shrink tabs as more are opened instead of just scrolling
+require('barbar').setup({
+  minimum_padding = 0,
+  maximum_padding = 1,
+  minimum_length = 0,
+  maximum_length = 18,
+})
 
 -- =========================
 --    HOTKEYS & lua MODULES
