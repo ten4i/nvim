@@ -63,6 +63,10 @@ vim.api.nvim_create_autocmd("FileType", {
   command = "setlocal conceallevel=2",
 })
 
+-- wrap long lines, keep indent on wrapped lines
+vim.opt.wrap = true
+vim.opt.breakindent = true
+
 -- Disable coc for most languages
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "python", "lua" },
@@ -88,6 +92,12 @@ vim.api.nvim_create_user_command("Wqa", "wqa", {})
 vim.api.nvim_create_user_command("WQa", "wqa", {})
 vim.api.nvim_create_user_command("Qa", "qa", {})
 vim.api.nvim_create_user_command("QA", "qa", {})
+vim.api.nvim_create_user_command("QA!", "qa!", {})
+vim.api.nvim_create_user_command("Qa!", "qa!", {})
+vim.api.nvim_create_user_command("Wq!", "wq!", {})
+vim.api.nvim_create_user_command("WQ!", "wq!", {})
+vim.api.nvim_create_user_command("Qall", "qall!", {})
+vim.api.nvim_create_user_command("Wqall", "wqall!", {})
 
 -- MACROS
 function _G.SaveMacro()
@@ -124,7 +134,6 @@ Plug 'MeanderingProgrammer/render-markdown.nvim'
 Plug 'windwp/nvim-autopairs'
 Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'}
 Plug 'lukas-reineke/indent-blankline.nvim'
-Plug 'folke/which-key.nvim'
 Plug 'stevearc/conform.nvim'
 Plug 'webhooked/kanso.nvim'
 Plug 'oskarnurm/koda.nvim'
@@ -140,6 +149,7 @@ Plug 'tpope/vim-dadbod'
 Plug 'kristijanhusak/vim-dadbod-ui'
 Plug 'kristijanhusak/vim-dadbod-completion'
 Plug 'christoomey/vim-tmux-navigator'
+Plug 'gen740/SmoothCursor.nvim'
 call plug#end()
 ]])
 
@@ -479,6 +489,7 @@ require("esp")
 
 pcall(require, "theme_changer")
 pcall(require, "lines")
+pcall(require, "smooth_cursor")
 pcall(require, "indent_guides")
 pcall(require, "key_hints")
 pcall(require, "nvim-dap")

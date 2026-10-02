@@ -1,11 +1,4 @@
--- popup with available keys after a prefix (Space, g, z, ...), and search over all mappings
-local ok, wk = pcall(require, "which-key")
-if ok then
-  wk.setup({
-    delay = 300,
-    preset = "helix",
-  })
-end
+-- search over built-in keys and your own mappings
 
 -- built-in keys (folds, ...): search by name in English or Russian
 vim.keymap.set("n", "<leader>?", function()
