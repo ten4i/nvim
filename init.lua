@@ -84,18 +84,16 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Case-insensitive commands for save/quit
-vim.api.nvim_create_user_command("W", "w", {})
+local aliases = {
+  W = "w",
+  Wq = "wq", WQ = "wq",
+  Wqa = "wqa", WQa = "wqa",
+  Qa = "qa", QA = "qa",
+}
+for name, target in pairs(aliases) do
+  vim.api.nvim_create_user_command(name, target .. "<bang>", { bang = true })
+end
 vim.api.nvim_create_user_command("Q", "qa!", {})
-vim.api.nvim_create_user_command("Wq", "wq", {})
-vim.api.nvim_create_user_command("WQ", "wq", {})
-vim.api.nvim_create_user_command("Wqa", "wqa", {})
-vim.api.nvim_create_user_command("WQa", "wqa", {})
-vim.api.nvim_create_user_command("Qa", "qa", {})
-vim.api.nvim_create_user_command("QA", "qa", {})
-vim.api.nvim_create_user_command("QA!", "qa!", {})
-vim.api.nvim_create_user_command("Qa!", "qa!", {})
-vim.api.nvim_create_user_command("Wq!", "wq!", {})
-vim.api.nvim_create_user_command("WQ!", "wq!", {})
 vim.api.nvim_create_user_command("Qall", "qall!", {})
 vim.api.nvim_create_user_command("Wqall", "wqall!", {})
 
@@ -178,7 +176,7 @@ vim.keymap.set("v", "<S-Down>", "8j")
 vim.keymap.set("v", "<S-Up>", "8k")
 
 -- Tabs navigation with leader key
-vim.keymap.set("n", "bd", "<cmd>bw!<CR>", { desc = "Close buffer" })
+vim.keymap.set("n", "<leader>c", "<cmd>bw!<CR>", { desc = "Close buffer" })
 vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
   callback = function()
     vim.schedule(function()
@@ -192,8 +190,6 @@ vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
     end)
   end,
 })
-vim.keymap.set("n", "bp", ":BufferPrevious<CR>")
-vim.keymap.set("n", "bn", ":BufferNext<CR>")
 
 -- keep selection after indent/outdent so < and > can be pressed repeatedly
 vim.keymap.set("v", "<", "<gv")
