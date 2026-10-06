@@ -134,7 +134,7 @@ local cheatsheet = {
   { "<F4>", "debug: step out / шаг наружу" },
   { "<F7>", "debug: terminate / остановить отладку" },
   { "<S-Left> / <S-Right>", "buffer: previous / next tab / вкладка назад, вперёд" },
-  { "<Space>c", "buffer: close buffer / закрыть буфер" },
+  { "<Space>x", "buffer: close buffer / закрыть буфер" },
   { "<S-Up> / <S-Down>", "move: 8 lines up / down / на 8 строк вверх, вниз" },
   { "<Space>w", "window: window commands prefix (<C-w>) / команды окон" },
   { "ff", "telescope: find files / найти файл" },
