@@ -162,6 +162,7 @@ local cheatsheet = {
   { "Q", "record macro (q is disabled) / запись макроса" },
   { "<C-y>", "markdown: wrap word/line/selection in `code` / обернуть в код" },
   { "<C-S-y> (visual)", "markdown: wrap selection in code fence / блок кода" },
+  { "<Space>W", "toggle line wrap (nowrap for wide tables) / переключить перенос строк" },
   { "<Space>t", "terminal: open terminal / открыть терминал" },
   { "<Space>cl", "terminal: run claude / запустить claude" },
   { "<Esc> (terminal)", "terminal: back to normal mode / выйти в normal" },

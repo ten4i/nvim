@@ -82,7 +82,7 @@ local function apply_theme()
   if bg == "dark" then
     vim.cmd.colorscheme("koda-dark")   -- dark theme
   else
-    vim.cmd.colorscheme("yang")   -- light theme
+    vim.cmd.colorscheme("koda-light")   -- light theme
   end
 
   transparent()

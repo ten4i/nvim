@@ -12,7 +12,7 @@ vim.opt.mouse = "a"
 vim.opt.encoding = "utf-8"
 -- vim.opt.relativenumber = true
 -- vim.opt.number = true
--- vim.opt.numberwidth = 1
+vim.opt.numberwidth = 1
 vim.opt.swapfile = false
 vim.opt.scrolloff = 7
 vim.opt.tabstop = 4
@@ -66,10 +66,22 @@ vim.api.nvim_create_autocmd("FileType", {
 -- wrap long lines, keep indent on wrapped lines
 vim.opt.wrap = true
 vim.opt.breakindent = true
+vim.opt.linebreak = true -- wrap on word boundaries, not mid-word
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  command = "setlocal wrap linebreak breakindent",
+})
+
+-- toggle wrap (nowrap keeps wide tables intact, scroll horizontally)
+vim.keymap.set("n", "<leader>W", function()
+  vim.wo.wrap = not vim.wo.wrap
+  vim.notify("wrap: " .. tostring(vim.wo.wrap))
+end, { desc = "toggle line wrap" })
 
 -- Disable coc for most languages
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "python", "lua" },
+  pattern = { "lua" },
   callback = function() vim.b.coc_enabled = 0 end,
 })
 
@@ -176,7 +188,7 @@ vim.keymap.set("v", "<S-Down>", "8j")
 vim.keymap.set("v", "<S-Up>", "8k")
 
 -- Tabs navigation with leader key
-vim.keymap.set("n", "<leader>c", "<cmd>bw!<CR>", { desc = "Close buffer" })
+vim.keymap.set("n", "<leader>x", "<cmd>bw!<CR>", { desc = "Close buffer" })
 vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
   callback = function()
     vim.schedule(function()
@@ -431,6 +443,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, opts)
   end,
 })
+
+-- coc diagnostics: show error text under cursor
+vim.keymap.set("n", "<leader>e", "<Plug>(coc-diagnostic-info)", { silent = true, desc = "Show diagnostic" })
 
 -- DBUI
 local function db_connect()
