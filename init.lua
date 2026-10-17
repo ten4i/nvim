@@ -204,6 +204,7 @@ vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
 })
 
 -- keep selection after indent/outdent so < and > can be pressed repeatedly
+vim.keymap.set({ "i", "v" }, "<C-z>", "<Cmd>stop<CR>", { desc = "Suspend nvim to shell (fg to return)" })
 vim.keymap.set("v", "<", "<gv")
 vim.keymap.set("v", ">", ">gv")
 
@@ -278,7 +279,6 @@ end, { silent = true })
 -- usual clipboard's sets
 vim.keymap.set("v", "<C-c>", '"+y<Esc>i')
 vim.keymap.set("v", "<C-x>", '"+d<Esc>i')
-vim.keymap.set("i", "<C-z>", "<Esc>ui")
 -- yank / paste system
 vim.keymap.set("", "<leader>y", '"+y')
 vim.keymap.set("", "<leader>p", '"+p')
