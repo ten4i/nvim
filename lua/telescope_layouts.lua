@@ -97,6 +97,7 @@ end
 -- searchable list of keys: built-in Neovim keys (not mappings, so :Telescope keymaps can't see them)
 -- plus a short description for every custom mapping, in English and Russian
 local cheatsheet = {
+  { "<PageDown>", "page down; near end of file puts last line mid-screen / страница вниз; у конца файла последняя строка по центру" },
   { "<C-z>", "suspend nvim to shell, fg to return / свернуть nvim в терминал, fg для возврата" },
   { "za", "fold: toggle fold under cursor / переключить складку" },
   { "zo", "fold: open fold under cursor / открыть складку" },

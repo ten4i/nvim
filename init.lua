@@ -187,6 +187,16 @@ vim.keymap.set("n", "<S-Up>", "8k")
 vim.keymap.set("v", "<S-Down>", "8j")
 vim.keymap.set("v", "<S-Up>", "8k")
 
+-- PageDown: when the next page would overshoot the end of file, put the last line mid-screen
+local function page_down()
+	if vim.fn.line("w$") + vim.fn.winheight(0) - 2 >= vim.fn.line("$") then
+		vim.cmd("normal! Gzz")
+	else
+		vim.cmd([[execute "normal! \<C-f>"]])
+	end
+end
+vim.keymap.set({ "n", "i" }, "<PageDown>", page_down, { desc = "Page down, last page stops at half screen" })
+
 -- Tabs navigation with leader key
 vim.keymap.set("n", "<leader>x", "<cmd>bw!<CR>", { desc = "Close buffer" })
 vim.api.nvim_create_autocmd({ "BufHidden", "BufWinEnter" }, {
