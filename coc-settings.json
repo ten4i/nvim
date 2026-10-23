@@ -2,7 +2,15 @@
   "snippets.ultisnips.pythonPrompt": false,
   "sql.dialect": "mysql",
   "yaml.schemas": {
-    "kubernetes": "*.yml"
+    "kubernetes": ["*.yml", "*.yaml"]
+  },
+  "languageserver": {
+    "helm": {
+      "command": "helm_ls",
+      "args": ["serve"],
+      "filetypes": ["helm"],
+      "rootPatterns": ["Chart.yaml"]
+    }
   },
   "clangd.arguments": [
     "--query-driver=/home/ten4i/.espressif/tools/**/bin/*,/home/ten4i/.arduino15/packages/**/bin/*"

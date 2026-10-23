@@ -95,6 +95,32 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function() vim.b.coc_snippet_disable = 1 end,
 })
 
+-- helm: yaml/tpl files inside a chart's templates/ dir (Chart.yaml found upward)
+vim.filetype.add({
+  extension = { tpl = "helm" },
+  pattern = {
+    [".*/templates/.*%.ya?ml"] = {
+      function(path)
+        if vim.fs.find("Chart.yaml", { path = vim.fs.dirname(path), upward = true })[1] then
+          return "helm"
+        end
+      end,
+      { priority = 10 },
+    },
+  },
+})
+
+-- trim trailing whitespace on save (markdown excluded: two spaces = line break)
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*",
+  callback = function(args)
+    if vim.bo[args.buf].filetype == "markdown" then return end
+    local view = vim.fn.winsaveview()
+    vim.cmd([[keeppatterns %s/\s\+$//e]])
+    vim.fn.winrestview(view)
+  end,
+})
+
 -- Case-insensitive commands for save/quit
 local aliases = {
   W = "w",
