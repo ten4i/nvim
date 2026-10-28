@@ -3,16 +3,18 @@ local M = {}
 local port = "/dev/ttyUSB0"
 
 -- Board presets. ESP32 is intentionally NOT here: those projects use ESP-IDF (idf.py), not arduino-cli.
+local avr_includes = {
+  "/usr/lib/gcc/avr/5.4.0/include",
+  "/usr/lib/gcc/avr/5.4.0/include-fixed",
+  "/usr/lib/gcc/avr/5.4.0/../../../avr/include",
+}
+
 local boards = {
-  nano = {
-    fqbn = "arduino:avr:nano:cpu=atmega328old",
-    baud = "9600",
-    includes = {
-      "/usr/lib/gcc/avr/5.4.0/include",
-      "/usr/lib/gcc/avr/5.4.0/include-fixed",
-      "/usr/lib/gcc/avr/5.4.0/../../../avr/include",
-    },
-  },
+  nano = { fqbn = "arduino:avr:nano:cpu=atmega328", baud = "9600", includes = avr_includes },
+  nano_old = { fqbn = "arduino:avr:nano:cpu=atmega328old", baud = "9600", includes = avr_includes },
+  uno = { fqbn = "arduino:avr:uno", baud = "9600", includes = avr_includes },
+  mega = { fqbn = "arduino:avr:mega:cpu=atmega2560", baud = "9600", includes = avr_includes },
+  promini = { fqbn = "arduino:avr:pro:cpu=16MHzatmega328", baud = "9600", includes = avr_includes },
   esp8266 = {
     fqbn = "esp8266:esp8266:generic",
     baud = "115200",
@@ -23,7 +25,7 @@ local boards = {
   },
 }
 
-local default_board = "nano"
+local default_board = "nano_old"
 -- Remembers the chosen board per project directory, so switching sketches doesn't
 -- reset the selection back to default_board.
 local project_board = {}
@@ -49,8 +51,40 @@ local function current_dir()
   return vim.fn.fnamemodify(file, ":h")
 end
 
+-- Reads default_fqbn from the sketch's sketch.yaml (created by `arduino-cli board attach`)
+-- and returns the preset name whose core:arch:board matches it.
+local function board_from_sketch_yaml(dir)
+  local f = io.open(dir .. "/sketch.yaml", "r")
+  if not f then
+    return nil
+  end
+  local content = f:read("*a")
+  f:close()
+
+  local fqbn = content:match("default_fqbn:%s*([^%s]+)")
+  if not fqbn then
+    return nil
+  end
+
+  -- Exact match first: nano and nano_old differ only in the cpu= option.
+  for name, board in pairs(boards) do
+    if board.fqbn == fqbn then
+      return name
+    end
+  end
+
+  local function short(v)
+    return table.concat(vim.list_slice(vim.split(v, ":", { plain = true }), 1, 3), ":")
+  end
+  for name, board in pairs(boards) do
+    if short(board.fqbn) == short(fqbn) then
+      return name
+    end
+  end
+end
+
 local function board_for(dir)
-  local name = project_board[dir] or default_board
+  local name = project_board[dir] or board_from_sketch_yaml(dir) or default_board
   return name, boards[name]
 end
 
@@ -68,13 +102,16 @@ function M.board()
       return
     end
     project_board[dir] = choice
+    -- Persist the choice in sketch.yaml so it survives restarting nvim.
+    vim.fn.system({ "arduino-cli", "board", "attach", "-b", boards[choice].fqbn, dir })
     notify("Board set to " .. choice .. " (" .. boards[choice].fqbn .. ")")
   end)
 end
 
 local function write_clangd(dir, board)
   local clangd_path = dir .. "/.clangd"
-  local lines = { "CompileFlags:", "  Add: [" }
+  -- .ino has no #include <Arduino.h>; arduino-cli adds it only in the generated build/sketch/*.ino.cpp.
+  local lines = { "CompileFlags:", "  Add: [", '    "-include", "Arduino.h",' }
   for i, inc in ipairs(board.includes) do
     local suffix = i < #board.includes and "," or ""
     table.insert(lines, string.format('    "-isystem", "%s"%s', inc, suffix))

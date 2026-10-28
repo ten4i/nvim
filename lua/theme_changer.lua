@@ -80,7 +80,7 @@ local function apply_theme()
   vim.o.background = bg
 
   if bg == "dark" then
-    vim.cmd.colorscheme("koda-dark")   -- dark theme
+    vim.cmd.colorscheme("koda-moss")   -- dark theme
   else
     vim.cmd.colorscheme("koda-light")   -- light theme
   end

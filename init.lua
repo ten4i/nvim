@@ -43,7 +43,8 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99
 vim.opt.foldlevelstart = 99
-vim.opt.foldnestmax = 10
+-- pcall: on :source the treesitter OptionSet fold handler can hit an already wiped buffer
+pcall(function() vim.opt.foldnestmax = 10 end)
 vim.api.nvim_create_autocmd("FileType", {
   callback = function(args)
     if not pcall(vim.treesitter.get_parser, args.buf) then
@@ -204,6 +205,8 @@ require('barbar').setup({
 -- navigation
 vim.keymap.set("", "<S-Left>", ":BufferPrev<CR>", { silent = true })
 vim.keymap.set("", "<S-Right>", ":BufferNext<CR>", { silent = true })
+vim.keymap.set("n", "<leader>k", "<Cmd>BufferNext<CR>", { silent = true, desc = "Next tab" })
+vim.keymap.set("n", "<leader>j", "<Cmd>BufferPrevious<CR>", { silent = true, desc = "Previous tab" })
 vim.keymap.set("i", "<S-Left>", "<Esc>:BufferPrev<CR>", { silent = true })
 vim.keymap.set("i", "<S-Right>", "<Esc>:BufferNext<CR>", { silent = true })
 vim.keymap.set("t", "<S-Left>", [[<C-\><C-n>:BufferPrev<CR>]], { silent = true })
@@ -420,10 +423,39 @@ end, { expr = true })
 vim.g.coc_snippet_next = "<C-j>"
 vim.g.coc_snippet_prev = "<C-k>"
 
+-- coc only maps those keys in insert/select mode. Add normal mode too, but only
+-- while a snippet session is active; otherwise the key keeps its default behaviour.
+-- Not an <expr> map: the coc jump moves the cursor, which textlock forbids there.
+-- vim-tmux-navigator owns <C-j>/<C-k> in normal mode (pane switching) and loads after
+-- init.lua, so set these on VimEnter and fall back to its commands when no snippet is active.
+local snippet_jump = {
+  ["<C-j>"] = { fn = "coc#snippet#next", fallback = "TmuxNavigateDown" },
+  ["<C-k>"] = { fn = "coc#snippet#prev", fallback = "TmuxNavigateUp" },
+}
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    for key, cfg in pairs(snippet_jump) do
+      vim.keymap.set("n", key, function()
+        local jumpable = vim.fn["coc#jumpable"]()
+        if jumpable == 1 or jumpable == true then
+          vim.fn[cfg.fn]()
+        else
+          vim.cmd(cfg.fallback)
+        end
+      end, { desc = "snippet: jump placeholder (coc), else tmux pane" })
+    end
+  end,
+})
+
 -- coc.nvim spawns node via a non-interactive shell, which does not source
 -- .zshrc, so the nvm PATH export never applies there. Point coc directly
 -- at the node binary to avoid depending on shell PATH.
-vim.g.coc_node_path = vim.fn.expand("~/.nvm/versions/node/v24.19.0/bin/node")
+-- Fall back to the system node (apt nodejs) when nvm is not installed,
+-- e.g. on a fresh user account.
+local nvm_node = vim.fn.expand("~/.nvm/versions/node/v24.19.0/bin/node")
+if vim.fn.executable(nvm_node) == 1 then
+  vim.g.coc_node_path = nvm_node
+end
 
 -- ARDUINO
 local arduino = require("arduino")

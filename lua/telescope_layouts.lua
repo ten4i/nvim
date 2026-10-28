@@ -30,7 +30,7 @@ local function smart_layout(force_preview)
           prompt_position = "bottom",
         },
         width = 0.95,
-        height = 0.95,
+        height = 999, -- больше экрана: telescope обрежет до максимума (1.0 = 1 строка)
       },
     }
   end
@@ -46,7 +46,7 @@ local function smart_layout(force_preview)
           prompt_position = "bottom",
         },
         width = 0.95,
-        height = 0.95,
+        height = 999, -- больше экрана: telescope обрежет до максимума (1.0 = 1 строка)
       },
     }
   end
@@ -152,6 +152,7 @@ local cheatsheet = {
   { "<Space>ev", "config: edit init.lua / редактировать конфиг" },
   { "<Space>sv", "config: reload init.lua / перезагрузить конфиг" },
   { "<Space>vd", "markdown: rebuild vault dictionary / пересобрать словарь" },
+  { "<Space>k / <Space>j", "buffer: next / previous tab / следующая, предыдущая вкладка" },
   { "<Space>bf", "format: format buffer (conform) / форматировать файл" },
   { "<Space>rp", "repeat: insert repeated text template / повторить текст" },
   { "<Space>h", "search: clear highlight / убрать подсветку поиска" },
@@ -168,7 +169,7 @@ local cheatsheet = {
   { "<Space>t", "terminal: open terminal / открыть терминал" },
   { "<Space>cl", "terminal: run claude / запустить claude" },
   { "<Esc> (terminal)", "terminal: back to normal mode / выйти в normal" },
-  { "<C-j> / <C-k> (insert)", "snippet: next / previous placeholder (coc) / сниппет вперёд, назад" },
+  { "<C-j> / <C-k> (insert, normal)", "snippet: next / previous placeholder (coc) / сниппет вперёд, назад" },
   { "<Space>e", "diagnostics: show float / показать ошибку (в sql: выполнить строку)" },
   { "]d / [d", "diagnostics: next / previous / следующая, предыдущая" },
   { "<Space>db", "db: toggle DBUI / панель баз данных" },
