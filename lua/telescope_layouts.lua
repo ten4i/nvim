@@ -158,6 +158,7 @@ local cheatsheet = {
   { "<Space>h", "search: clear highlight / убрать подсветку поиска" },
   { "<Space>y / <Space>p", "clipboard: yank / paste system + / копировать, вставить (буфер +)" },
   { "<Space>Y / <Space>P", "clipboard: yank / paste selection * / копировать, вставить (буфер *)" },
+  { "y (visual)", "clipboard: yank to system + as well / копировать в системный буфер +" },
   { "<C-c> / <C-x> (visual)", "clipboard: copy / cut to system / копировать, вырезать" },
   { "<C-z> (insert)", "undo last change / отменить" },
   { "<C-h> (insert)", "delete previous word / удалить слово" },

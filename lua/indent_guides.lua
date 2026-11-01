@@ -92,18 +92,11 @@ if ok then
   })
 end
 
--- IBL is off globally; turn it on for yaml buffers only
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "yaml", "yaml.docker-compose" },
-  callback = function(args)
-    require("ibl").setup_buffer(args.buf, { enabled = true })
-  end,
-})
-
--- ibl merges per-buffer config on top of the global config, so the buffer-local
--- `enabled = true` set above always wins over a plain global :IBLDisable in yaml
--- buffers. Redefine IBLEnable/IBLDisable/IBLToggle (on VimEnter, so this runs
--- after ibl's own after/plugin/commands.lua) to also clear the buffer override.
+-- IBL is off by default everywhere; enable on demand with :IBLEnable / :IBLToggle.
+-- ibl merges per-buffer config on top of the global config, so a buffer-local
+-- override wins over a plain global :IBLDisable. Redefine IBLEnable/IBLDisable/IBLToggle
+-- (on VimEnter, so this runs after ibl's own after/plugin/commands.lua) to set the
+-- buffer override together with the global state.
 vim.api.nvim_create_autocmd("VimEnter", {
   once = true,
   callback = function()

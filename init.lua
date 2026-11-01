@@ -176,7 +176,21 @@ Plug 'webhooked/kanso.nvim'
 Plug 'oskarnurm/koda.nvim'
 Plug 'sjl/badwolf'
 Plug 'yankcrime/direwolf'
+Plug 'rebelot/kanagawa.nvim'
 Plug 'pgdouyon/vim-yin-yang'
+" themes matching ~/.config/kitty/themes (picked in lua/theme_changer.lua)
+Plug 'catppuccin/nvim', {'as': 'catppuccin'}
+Plug 'Mofiqul/dracula.nvim'
+Plug 'neanias/everforest-nvim'
+Plug 'projekt0n/github-nvim-theme'
+Plug 'ellisonleao/gruvbox.nvim'
+Plug 'crusoexia/vim-monokai'
+Plug 'shaunsingh/nord.nvim'
+Plug 'navarasu/onedark.nvim'
+Plug 'rose-pine/neovim', {'as': 'rose-pine'}
+Plug 'ishan9299/nvim-solarized-lua'
+Plug 'folke/tokyonight.nvim'
+Plug 'chriskempson/vim-tomorrow-theme'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'stevearc/vim-arduino'
 Plug 'hrsh7th/nvim-cmp'
@@ -315,9 +329,8 @@ vim.keymap.set("i", "<C-y>", function()
   vim.api.nvim_win_set_cursor(0, { row, col + 1 })
 end, { silent = true })
 
--- usual clipboard's sets
-vim.keymap.set("v", "<C-c>", '"+y<Esc>i')
-vim.keymap.set("v", "<C-x>", '"+d<Esc>i')
+-- plain y in visual mode also goes to the system clipboard
+vim.keymap.set("x", "y", '"+y', { desc = "yank to system clipboard" })
 -- yank / paste system
 vim.keymap.set("", "<leader>y", '"+y')
 vim.keymap.set("", "<leader>p", '"+p')
